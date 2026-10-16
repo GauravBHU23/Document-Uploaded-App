@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useSetPersonPin, useClearPersonPin } from "@/lib/people/hooks";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import type { Person } from "@/lib/types";
 
 function generatePin() {
@@ -29,6 +30,7 @@ export default function PersonAccessCard({ person }: { person: Person }) {
 
   const setPersonPin = useSetPersonPin();
   const clearPersonPin = useClearPersonPin();
+  const confirm = useConfirm();
 
   const hasPin = Boolean(person.access_pin_hash);
   const viewUrl = origin ? `${origin}/view/${person.id}` : "";
@@ -50,7 +52,13 @@ export default function PersonAccessCard({ person }: { person: Person }) {
   }
 
   async function handleClear() {
-    if (!confirm(`Remove ${person.full_name}'s access PIN? Their link will stop working.`)) return;
+    const confirmed = await confirm({
+      title: "Disable self-access?",
+      description: `${person.full_name}'s link will stop working immediately.`,
+      confirmLabel: "Disable",
+      danger: true,
+    });
+    if (!confirmed) return;
     try {
       await clearPersonPin.mutateAsync(person.id);
       toast.success("Access disabled");

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getSignedUrl } from "@/lib/documents/upload";
 import { useDeleteDocument, useRenameDocument } from "@/lib/documents/hooks";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import type { Document } from "@/lib/types";
 
 function formatSize(bytes: number) {
@@ -28,6 +29,7 @@ export default function DocumentCard({ document }: { document: Document }) {
 
   const deleteDocument = useDeleteDocument();
   const renameDocument = useRenameDocument();
+  const confirm = useConfirm();
 
   const isImage = document.mime_type.startsWith("image/");
 
@@ -65,7 +67,13 @@ export default function DocumentCard({ document }: { document: Document }) {
   }
 
   async function handleDelete() {
-    if (!confirm(`Delete "${document.label}"? This cannot be undone.`)) return;
+    const confirmed = await confirm({
+      title: `Delete "${document.label}"?`,
+      description: "This cannot be undone.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!confirmed) return;
     try {
       await deleteDocument.mutateAsync(document);
       toast.success("Document deleted");

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
 import InstallPrompt from "@/components/InstallPrompt";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { useAdmin } from "@/lib/auth/use-admin";
 import { usePeople, useCreatePerson, useDeletePerson } from "@/lib/people/hooks";
 import NewPersonDialog from "./new-person-dialog";
@@ -38,6 +39,7 @@ export default function DashboardPage() {
   const { data: people, isLoading: peopleLoading, isError: peopleError } = usePeople(search);
   const createPerson = useCreatePerson();
   const deletePerson = useDeletePerson();
+  const confirm = useConfirm();
 
   async function handleCreate(values: {
     fullName: string;
@@ -56,9 +58,13 @@ export default function DashboardPage() {
   }
 
   async function handleDelete(personId: string, fullName: string) {
-    if (!confirm(`Delete ${fullName} and all their documents? This cannot be undone.`)) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: `Delete ${fullName}?`,
+      description: "This also deletes all of their documents. This cannot be undone.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!confirmed) return;
     try {
       await deletePerson.mutateAsync(personId);
       toast.success(`${fullName} deleted`);
