@@ -138,6 +138,34 @@ export function usePermanentlyDeleteDocument() {
   });
 }
 
+/** Soft-deletes (moves to Trash) every document in one batched
+ * update, instead of one request per document. */
+export function useBulkDeleteDocuments() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (documents: Document[]) => {
+      if (documents.length === 0) return documents;
+      const supabase = createClient();
+      const ids = documents.map((d) => d.id);
+      const { error } = await supabase
+        .from("documents")
+        .update({ deleted_at: new Date().toISOString() })
+        .in("id", ids);
+
+      if (error) throw new Error(error.message);
+      return documents;
+    },
+    onSuccess: (documents) => {
+      const personIds = new Set(documents.map((d) => d.person_id));
+      personIds.forEach((personId) => {
+        queryClient.invalidateQueries({ queryKey: ["documents", personId] });
+      });
+      queryClient.invalidateQueries({ queryKey: ["documents", "trash"] });
+    },
+  });
+}
+
 export function useRenameDocument() {
   const queryClient = useQueryClient();
 

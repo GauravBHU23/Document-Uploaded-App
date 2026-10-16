@@ -22,7 +22,14 @@ const SOURCE_LABEL: Record<Document["source"], string> = {
   tool_generated: "Generated",
 };
 
-export default function DocumentCard({ document }: { document: Document }) {
+type DocumentCardProps = {
+  document: Document;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (documentId: string) => void;
+};
+
+export default function DocumentCard({ document, selectable, selected, onToggleSelect }: DocumentCardProps) {
   const [renaming, setRenaming] = useState(false);
   const [label, setLabel] = useState(document.label);
   const [opening, setOpening] = useState(false);
@@ -34,6 +41,10 @@ export default function DocumentCard({ document }: { document: Document }) {
   const isImage = document.mime_type.startsWith("image/");
 
   async function handleOpen() {
+    if (selectable) {
+      onToggleSelect?.(document.id);
+      return;
+    }
     setOpening(true);
     try {
       const supabase = createClient();
@@ -114,8 +125,27 @@ export default function DocumentCard({ document }: { document: Document }) {
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.18 }}
       whileHover={{ y: -2 }}
-      className="group relative flex flex-col rounded-xl border border-zinc-200/80 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-lg hover:shadow-indigo-900/5 dark:border-zinc-800/80 dark:bg-zinc-950/60"
+      className={`group relative flex flex-col rounded-xl border p-3 shadow-sm transition-shadow hover:shadow-lg hover:shadow-indigo-900/5 ${
+        selected
+          ? "border-indigo-400 bg-indigo-50/60 dark:border-indigo-500 dark:bg-indigo-950/30"
+          : "border-zinc-200/80 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-950/60"
+      }`}
     >
+      {selectable && (
+        <div
+          className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded-md border-2 transition-colors ${
+            selected
+              ? "border-indigo-600 bg-indigo-600 text-white"
+              : "border-zinc-300 bg-white/90 dark:border-zinc-600 dark:bg-zinc-900/90"
+          }`}
+        >
+          {selected && (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+              <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+            </svg>
+          )}
+        </div>
+      )}
       <button
         type="button"
         onClick={handleOpen}
@@ -158,9 +188,15 @@ export default function DocumentCard({ document }: { document: Document }) {
         ) : (
           <button
             type="button"
-            onClick={() => setRenaming(true)}
+            onClick={() => {
+              if (selectable) {
+                onToggleSelect?.(document.id);
+                return;
+              }
+              setRenaming(true);
+            }}
             className="block w-full truncate text-left text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-50"
-            title="Click to rename"
+            title={selectable ? undefined : "Click to rename"}
           >
             {document.label}
           </button>
@@ -175,37 +211,41 @@ export default function DocumentCard({ document }: { document: Document }) {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={handleDownload}
-        disabled={opening}
-        className="absolute left-2 top-2 rounded bg-white/90 p-1 text-zinc-400 opacity-70 transition-opacity hover:bg-indigo-50 hover:text-indigo-600 hover:opacity-100 disabled:opacity-40 dark:bg-zinc-950/90 dark:hover:bg-indigo-950/40"
-        aria-label={`Download ${document.label}`}
-        title="Download"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-          <path
-            fillRule="evenodd"
-            d="M10 3a.75.75 0 01.75.75v6.638l1.96-2.158a.75.75 0 111.08 1.04l-3.25 3.5a.75.75 0 01-1.08 0l-3.25-3.5a.75.75 0 111.08-1.04l1.96 2.158V3.75A.75.75 0 0110 3zM3 13.25a.75.75 0 01.75.75v2a1.5 1.5 0 001.5 1.5h9.5a1.5 1.5 0 001.5-1.5v-2a.75.75 0 011.5 0v2a3 3 0 01-3 3h-9.5a3 3 0 01-3-3v-2a.75.75 0 01.75-.75z"
-            clipRule="evenodd"
-          />
-        </svg>
-      </button>
+      {!selectable && (
+        <>
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={opening}
+            className="absolute left-2 top-2 rounded bg-white/90 p-1 text-zinc-400 opacity-70 transition-opacity hover:bg-indigo-50 hover:text-indigo-600 hover:opacity-100 disabled:opacity-40 dark:bg-zinc-950/90 dark:hover:bg-indigo-950/40"
+            aria-label={`Download ${document.label}`}
+            title="Download"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+              <path
+                fillRule="evenodd"
+                d="M10 3a.75.75 0 01.75.75v6.638l1.96-2.158a.75.75 0 111.08 1.04l-3.25 3.5a.75.75 0 01-1.08 0l-3.25-3.5a.75.75 0 111.08-1.04l1.96 2.158V3.75A.75.75 0 0110 3zM3 13.25a.75.75 0 01.75.75v2a1.5 1.5 0 001.5 1.5h9.5a1.5 1.5 0 001.5-1.5v-2a.75.75 0 011.5 0v2a3 3 0 01-3 3h-9.5a3 3 0 01-3-3v-2a.75.75 0 01.75-.75z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
 
-      <button
-        type="button"
-        onClick={handleDelete}
-        className="absolute right-2 top-2 rounded bg-white/90 p-1 text-zinc-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 dark:bg-zinc-950/90 dark:hover:bg-red-950/40"
-        aria-label={`Delete ${document.label}`}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-          <path
-            fillRule="evenodd"
-            d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
-            clipRule="evenodd"
-          />
-        </svg>
-      </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="absolute right-2 top-2 rounded bg-white/90 p-1 text-zinc-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 dark:bg-zinc-950/90 dark:hover:bg-red-950/40"
+            aria-label={`Delete ${document.label}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+              <path
+                fillRule="evenodd"
+                d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+        </>
+      )}
     </motion.li>
   );
 }
