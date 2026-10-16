@@ -93,9 +93,11 @@ export default function DashboardPage() {
               style={{ textShadow: "0 1px 10px rgba(0,0,0,0.15)" }}
             >
               <div>
-                <p className="text-sm font-semibold text-white/90">Welcome back</p>
+                <p className="text-sm font-semibold text-white/90">
+                  Welcome back{admin?.display_name ? `, ${admin.display_name}` : ""}
+                </p>
                 <h2 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
-                  {admin?.display_name || "Your"} Document Workspace
+                  Document Workspace
                 </h2>
                 <p className="mt-2 max-w-lg text-sm font-medium text-white/90 sm:text-base">
                   Every person&apos;s documents, organized and ready — synced instantly across your devices.
