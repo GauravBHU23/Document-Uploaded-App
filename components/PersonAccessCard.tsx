@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useSetPersonPin, useClearPersonPin } from "@/lib/people/hooks";
@@ -14,11 +14,18 @@ export default function PersonAccessCard({ person }: { person: Person }) {
   const [editing, setEditing] = useState(false);
   const [pin, setPin] = useState("");
   const [copied, setCopied] = useState(false);
-  // Lazy initializer: runs once per mount, consistent with how this
-  // component is only ever mounted client-side in practice (the
-  // parent page renders it after person/admin data resolves), but
-  // kept server-safe regardless so it can never hydration-mismatch.
-  const [origin] = useState(() => (typeof window !== "undefined" ? window.location.origin : ""));
+  // Starts empty on both server and the client's first render
+  // (window.location.origin is only knowable client-side), then set
+  // post-mount -- this component currently only ever mounts after its
+  // parent's data has loaded (so it never actually appears in server
+  // HTML in practice), but this keeps it correct independent of that.
+  const [origin, setOrigin] = useState("");
+  useEffect(() => {
+    // Post-hydration sync from browser-only state, same justified
+    // exception as the other window-reading effects in this codebase.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOrigin(window.location.origin);
+  }, []);
 
   const setPersonPin = useSetPersonPin();
   const clearPersonPin = useClearPersonPin();

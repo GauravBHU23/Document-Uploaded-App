@@ -51,10 +51,15 @@ function computeRemainingMs(): number {
  */
 export function useIdleLogout() {
   const router = useRouter();
-  const [remainingMs, setRemainingMs] = useState(() => {
-    if (typeof window === "undefined") return IDLE_TIMEOUT_MS;
-    return computeRemainingMs();
-  });
+  // Always starts at the full timeout, identically on the server and
+  // on the client's first render -- computeRemainingMs() reads
+  // localStorage/Date.now(), which can only be known client-side and
+  // is already nonzero-elapsed for a returning tab, so calling it in
+  // the initializer (even behind a typeof-window guard) mismatches
+  // the server's render for the same reason every other "read browser
+  // state in useState(() => ...)" bug in this codebase did. The real
+  // value is reconciled by the effect below immediately after mount.
+  const [remainingMs, setRemainingMs] = useState(IDLE_TIMEOUT_MS);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const secondsLeft = remainingMs <= WARNING_BEFORE_MS ? Math.max(0, Math.ceil(remainingMs / 1000)) : null;
@@ -78,6 +83,15 @@ export function useIdleLogout() {
     if (readLastActivity() === null) {
       writeLastActivity(Date.now());
     }
+
+    // Reconcile the real remaining time right after mount, instead of
+    // leaving the badge showing the full timeout for up to 1s until
+    // the first interval tick below corrects it. This is the
+    // post-hydration sync from browser-only state (storage + wall
+    // clock) that the lazy initializer above deliberately avoids doing
+    // during render, to not mismatch the server.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRemainingMs(computeRemainingMs());
 
     ACTIVITY_EVENTS.forEach((evt) => window.addEventListener(evt, recordActivity, { passive: true }));
 
