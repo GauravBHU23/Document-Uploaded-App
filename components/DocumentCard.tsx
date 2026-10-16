@@ -44,6 +44,26 @@ export default function DocumentCard({ document }: { document: Document }) {
     }
   }
 
+  async function handleDownload() {
+    setOpening(true);
+    try {
+      const supabase = createClient();
+      const url = await getSignedUrl(supabase, document.storage_path, 60);
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = window.document.createElement("a");
+      a.href = blobUrl;
+      a.download = document.label;
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not download file");
+    } finally {
+      setOpening(false);
+    }
+  }
+
   async function handleDelete() {
     if (!confirm(`Delete "${document.label}"? This cannot be undone.`)) return;
     try {
@@ -146,6 +166,23 @@ export default function DocumentCard({ document }: { document: Document }) {
           </span>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={handleDownload}
+        disabled={opening}
+        className="absolute left-2 top-2 rounded bg-white/90 p-1 text-zinc-400 opacity-70 transition-opacity hover:bg-indigo-50 hover:text-indigo-600 hover:opacity-100 disabled:opacity-40 dark:bg-zinc-950/90 dark:hover:bg-indigo-950/40"
+        aria-label={`Download ${document.label}`}
+        title="Download"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+          <path
+            fillRule="evenodd"
+            d="M10 3a.75.75 0 01.75.75v6.638l1.96-2.158a.75.75 0 111.08 1.04l-3.25 3.5a.75.75 0 01-1.08 0l-3.25-3.5a.75.75 0 111.08-1.04l1.96 2.158V3.75A.75.75 0 0110 3zM3 13.25a.75.75 0 01.75.75v2a1.5 1.5 0 001.5 1.5h9.5a1.5 1.5 0 001.5-1.5v-2a.75.75 0 011.5 0v2a3 3 0 01-3 3h-9.5a3 3 0 01-3-3v-2a.75.75 0 01.75-.75z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
 
       <button
         type="button"

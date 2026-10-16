@@ -1,6 +1,7 @@
 "use client";
 
 import { use } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import AppHeader from "@/components/AppHeader";
 import UploadDropzone from "@/components/UploadDropzone";
@@ -93,6 +94,12 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
                 transition={{ duration: 0.3, delay: 0.05 }}
               >
                 <UploadDropzone adminId={admin.id} personId={person.id} />
+                <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                  Need to merge PDFs or resize a photo first?{" "}
+                  <Link href="/tools" className="font-medium text-indigo-500 hover:underline dark:text-indigo-400">
+                    Open Tools
+                  </Link>
+                </p>
               </motion.div>
 
               <div className="mt-8 flex items-center justify-between">

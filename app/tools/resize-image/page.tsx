@@ -174,7 +174,7 @@ export default function ResizeImagePage() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                      Max width/height (px)
+                      Max dimension (px)
                     </label>
                     <input
                       type="number"
@@ -183,6 +183,9 @@ export default function ResizeImagePage() {
                       onChange={(e) => setCustomMaxDimension(Number(e.target.value) || 50)}
                       className="mt-1 w-full rounded-lg border border-zinc-300 bg-white/80 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-50"
                     />
+                    <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                      Limits the longer side; the photo keeps its shape, never stretched.
+                    </p>
                   </div>
                 </div>
               )}

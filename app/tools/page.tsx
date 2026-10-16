@@ -36,31 +36,32 @@ export default function ToolsPage() {
       <AppHeader title="Tools" subtitle="Everything you need, without leaving the app" backHref="/dashboard" />
 
       <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 2xl:px-16">
-        <div className="mx-auto w-full max-w-5xl">
-          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mx-auto w-full max-w-2xl">
+          <ul className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2">
             {TOOLS.map((tool, i) => (
               <motion.li
                 key={tool.href}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0, transition: { delay: i * 0.05 } }}
                 whileHover={{ y: -3 }}
+                className="flex"
               >
                 <Link
                   href={tool.href}
-                  className="group relative block overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/80 p-6 shadow-sm transition-shadow hover:shadow-xl hover:shadow-indigo-900/10 dark:border-zinc-800/80 dark:bg-zinc-950/60"
+                  className="group relative flex w-full flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/80 p-6 shadow-sm transition-shadow hover:shadow-xl hover:shadow-indigo-900/10 dark:border-zinc-800/80 dark:bg-zinc-950/60"
                 >
                   <div
                     className={`absolute -right-8 -top-8 h-28 w-28 rounded-full bg-gradient-to-br ${tool.gradient} opacity-10 blur-xl transition-opacity group-hover:opacity-20`}
                   />
                   <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${tool.gradient} text-white shadow-md`}
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${tool.gradient} text-white shadow-md`}
                   >
                     {tool.icon}
                   </div>
                   <h2 className="relative mt-4 font-semibold text-zinc-900 dark:text-zinc-50">
                     {tool.title}
                   </h2>
-                  <p className="relative mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="relative mt-1 flex-1 text-sm text-zinc-500 dark:text-zinc-400">
                     {tool.description}
                   </p>
                   <p className="relative mt-3 flex items-center gap-1 text-sm font-medium text-indigo-500 opacity-0 transition-opacity group-hover:opacity-100 dark:text-indigo-400">
