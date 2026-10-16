@@ -71,6 +71,13 @@ export default function DocumentCard({ document }: { document: Document }) {
     }
   }
 
+  const SOURCE_BADGE_COLOR: Record<Document["source"], string> = {
+    upload: "bg-zinc-100 text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400",
+    camera: "bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400",
+    qr_mobile: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400",
+    tool_generated: "bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400",
+  };
+
   return (
     <motion.li
       layout
@@ -78,20 +85,26 @@ export default function DocumentCard({ document }: { document: Document }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.18 }}
-      className="group relative flex flex-col rounded-xl border border-zinc-200 bg-white p-3 transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950"
+      whileHover={{ y: -2 }}
+      className="group relative flex flex-col rounded-xl border border-zinc-200/80 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-lg hover:shadow-indigo-900/5 dark:border-zinc-800/80 dark:bg-zinc-950/60"
     >
       <button
         type="button"
         onClick={handleOpen}
         disabled={opening}
-        className="flex h-28 w-full items-center justify-center rounded-lg bg-zinc-100 text-zinc-400 dark:bg-zinc-900"
+        className="flex h-28 w-full items-center justify-center rounded-lg bg-gradient-to-br from-zinc-100 to-zinc-50 text-zinc-400 transition-colors group-hover:from-indigo-50 group-hover:to-violet-50 dark:from-zinc-900 dark:to-zinc-900/60 dark:group-hover:from-indigo-950/30 dark:group-hover:to-violet-950/20"
       >
-        {isImage ? (
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-10 w-10">
+        {opening ? (
+          <svg className="h-7 w-7 animate-spin text-indigo-400" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+          </svg>
+        ) : isImage ? (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-10 w-10 transition-transform group-hover:scale-110">
             <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clipRule="evenodd" />
           </svg>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-10 w-10">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-10 w-10 transition-transform group-hover:scale-110">
             <path fillRule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5h-7.5z" clipRule="evenodd" />
             <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
           </svg>
@@ -124,9 +137,14 @@ export default function DocumentCard({ document }: { document: Document }) {
             {document.label}
           </button>
         )}
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-          {formatSize(document.size_bytes)} · {SOURCE_LABEL[document.source]}
-        </p>
+        <div className="mt-1.5 flex items-center gap-1.5">
+          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${SOURCE_BADGE_COLOR[document.source]}`}>
+            {SOURCE_LABEL[document.source]}
+          </span>
+          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+            {formatSize(document.size_bytes)}
+          </span>
+        </div>
       </div>
 
       <button
