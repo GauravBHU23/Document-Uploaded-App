@@ -1,0 +1,50 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { createClient } from "@/lib/supabase/client";
+
+export type AuditAction =
+  | "person_created"
+  | "person_deleted"
+  | "document_uploaded"
+  | "document_trashed"
+  | "document_restored"
+  | "document_renamed"
+  | "document_permanently_deleted";
+
+export type AuditLogEntry = {
+  id: string;
+  admin_id: string;
+  action: AuditAction;
+  entity_type: "person" | "document";
+  entity_id: string;
+  entity_label: string | null;
+  person_id: string | null;
+  person_label: string | null;
+  metadata: Record<string, string> | null;
+  created_at: string;
+};
+
+const PAGE_SIZE = 50;
+
+export function useAuditLog(page: number) {
+  return useQuery({
+    queryKey: ["audit-log", page],
+    queryFn: async () => {
+      const supabase = createClient();
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      const { data, error, count } = await supabase
+        .from("audit_log")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (error) throw new Error(error.message);
+      return { entries: data as AuditLogEntry[], total: count ?? 0 };
+    },
+  });
+}
+
+export { PAGE_SIZE };

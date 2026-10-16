@@ -177,6 +177,16 @@ export default function DashboardPage() {
                 </svg>
               </Link>
               <Link
+                href="/audit-log"
+                className="inline-flex items-center justify-center rounded-xl border border-zinc-200/80 bg-white/70 p-2.5 text-zinc-500 shadow-sm backdrop-blur-sm transition-colors hover:bg-zinc-100 dark:border-zinc-700/80 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                aria-label="Audit Log"
+                title="Audit Log"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6a1 1 0 110 2H7a1 1 0 010-2zm0 4h6a1 1 0 110 2H7a1 1 0 010-2zm0 4h3a1 1 0 110 2H7a1 1 0 010-2z" clipRule="evenodd" />
+                </svg>
+              </Link>
+              <Link
                 href="/tools"
                 className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200/80 bg-white/70 px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm transition-colors hover:bg-zinc-100 dark:border-zinc-700/80 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
