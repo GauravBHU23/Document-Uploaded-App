@@ -14,13 +14,17 @@ export default function PersonAccessCard({ person }: { person: Person }) {
   const [editing, setEditing] = useState(false);
   const [pin, setPin] = useState("");
   const [copied, setCopied] = useState(false);
+  // Lazy initializer: runs once per mount, consistent with how this
+  // component is only ever mounted client-side in practice (the
+  // parent page renders it after person/admin data resolves), but
+  // kept server-safe regardless so it can never hydration-mismatch.
+  const [origin] = useState(() => (typeof window !== "undefined" ? window.location.origin : ""));
 
   const setPersonPin = useSetPersonPin();
   const clearPersonPin = useClearPersonPin();
 
   const hasPin = Boolean(person.access_pin_hash);
-  const viewUrl =
-    typeof window !== "undefined" ? `${window.location.origin}/view/${person.id}` : "";
+  const viewUrl = origin ? `${origin}/view/${person.id}` : "";
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

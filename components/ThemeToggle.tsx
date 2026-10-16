@@ -1,15 +1,36 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTheme } from "@/lib/theme/use-theme";
 
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
-  const isDark =
-    theme === "dark" ||
-    (theme === "system" &&
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches);
+  // System-preference dark/light can only be read via
+  // window.matchMedia, which doesn't exist during SSR. Keep this
+  // false until mounted so the server render and the client's first
+  // render agree (both "false"/default icon), then correct it in an
+  // effect -- reading it directly in the render body (even behind a
+  // `typeof window` check) mismatches, because the *client's own*
+  // first render already has `window` and would compute `true` before
+  // React has a chance to reconcile against the server's "false".
+  const [systemPrefersDark, setSystemPrefersDark] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    // This IS the "subscribe to an external system, then sync on
+    // change" pattern the lint rule's own guidance calls out as fine:
+    // the setState below is the first sync before the change listener
+    // takes over, and window.matchMedia genuinely cannot be read
+    // during render (no window on the server).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSystemPrefersDark(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setSystemPrefersDark(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  const isDark = theme === "dark" || (theme === "system" && systemPrefersDark);
 
   function toggle() {
     setTheme(isDark ? "light" : "dark");
