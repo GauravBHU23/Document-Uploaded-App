@@ -82,8 +82,6 @@ export default function DashboardPage() {
 
       <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 2xl:px-16">
         <div className="mx-auto w-full max-w-7xl">
-          <InstallPrompt />
-
           {/* Hero / stat strip */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -134,6 +132,8 @@ export default function DashboardPage() {
               </div>
             </div>
           </motion.div>
+
+          <InstallPrompt />
 
           {!adminLoading && adminError && (
             <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300">

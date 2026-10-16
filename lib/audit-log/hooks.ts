@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 
 export type AuditAction =
@@ -53,6 +53,21 @@ export function useAuditLog(page: number) {
 
       if (error) throw new Error(error.message);
       return { entries: data as AuditLogEntry[], total: count ?? 0 };
+    },
+  });
+}
+
+export function useDeleteAuditLogEntry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (entryId: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.rpc("delete_audit_log_entry", { p_entry_id: entryId });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["audit-log"] });
     },
   });
 }

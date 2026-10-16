@@ -18,6 +18,8 @@ type NewPersonDialogProps = {
 const inputClasses =
   "mt-1.5 w-full rounded-xl border border-zinc-300 bg-white/80 px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-all placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-50 dark:placeholder:text-zinc-600";
 
+const CATEGORY_OPTIONS = ["General", "OBC", "SC", "ST", "EWS"];
+
 export default function NewPersonDialog({
   open,
   onClose,
@@ -26,12 +28,14 @@ export default function NewPersonDialog({
 }: NewPersonDialogProps) {
   const [fullName, setFullName] = useState("");
   const [category, setCategory] = useState("");
+  const [customCategory, setCustomCategory] = useState(false);
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [notes, setNotes] = useState("");
 
   function reset() {
     setFullName("");
     setCategory("");
+    setCustomCategory(false);
     setDateOfBirth("");
     setNotes("");
   }
@@ -121,29 +125,64 @@ export default function NewPersonDialog({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    Category
-                  </label>
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Category
+                </label>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {CATEGORY_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => {
+                        setCategory(option);
+                        setCustomCategory(false);
+                      }}
+                      className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                        !customCategory && category === option
+                          ? "border-indigo-500 bg-indigo-500 text-white"
+                          : "border-zinc-300 bg-white/80 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomCategory(true);
+                      setCategory("");
+                    }}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      customCategory
+                        ? "border-indigo-500 bg-indigo-500 text-white"
+                        : "border-zinc-300 bg-white/80 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    Other
+                  </button>
+                </div>
+                {customCategory && (
                   <input
+                    autoFocus
                     placeholder="e.g. Student"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className={inputClasses}
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    Date of birth
-                  </label>
-                  <input
-                    type="date"
-                    value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                    className={`${inputClasses} [color-scheme:inherit]`}
-                  />
-                </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Date of birth
+                </label>
+                <input
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  className={`${inputClasses} [color-scheme:inherit]`}
+                />
               </div>
 
               <div>
