@@ -18,6 +18,11 @@
 // admin_id from the token server-side and never trusts a
 // client-supplied id, so this token can only ever write into the one
 // person's folder it was issued for.
+//
+// insert_document_for_token also rate-limits to 30 uploads per 10
+// minutes per token (supabase/migrations/0015_security_hardening.sql)
+// -- not because the token is guessable, but to cap how fast a known
+// (e.g. leaked/forwarded) token can be used to flood storage.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 

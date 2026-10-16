@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getSignedUrl } from "@/lib/documents/upload";
 import { useDeleteDocument, useRenameDocument } from "@/lib/documents/hooks";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
+import DocumentPreviewModal from "@/components/DocumentPreviewModal";
 import type { Document } from "@/lib/types";
 
 function formatSize(bytes: number) {
@@ -34,6 +35,8 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
   const [renaming, setRenaming] = useState(false);
   const [label, setLabel] = useState(document.label);
   const [opening, setOpening] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const deleteDocument = useDeleteDocument();
   const renameDocument = useRenameDocument();
@@ -46,15 +49,15 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
       onToggleSelect?.(document.id);
       return;
     }
-    setOpening(true);
+    setPreviewOpen(true);
+    setPreviewUrl(null);
     try {
       const supabase = createClient();
       const url = await getSignedUrl(supabase, document.storage_path, 60);
-      window.open(url, "_blank", "noopener,noreferrer");
+      setPreviewUrl(url);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not open file");
-    } finally {
-      setOpening(false);
+      setPreviewOpen(false);
     }
   }
 
@@ -248,6 +251,15 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
           </button>
         </>
       )}
+
+      <DocumentPreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        url={previewUrl}
+        label={document.label}
+        mimeType={document.mime_type}
+        onDownload={handleDownload}
+      />
     </motion.li>
   );
 }

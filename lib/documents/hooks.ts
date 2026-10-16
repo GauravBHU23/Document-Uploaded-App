@@ -166,6 +166,56 @@ export function useBulkDeleteDocuments() {
   });
 }
 
+/** Restores every given document in one batched update, mirroring
+ * useBulkDeleteDocuments. */
+export function useBulkRestoreDocuments() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (documents: Document[]) => {
+      if (documents.length === 0) return documents;
+      const supabase = createClient();
+      const ids = documents.map((d) => d.id);
+      const { error } = await supabase.from("documents").update({ deleted_at: null }).in("id", ids);
+
+      if (error) throw new Error(error.message);
+      return documents;
+    },
+    onSuccess: (documents) => {
+      const personIds = new Set(documents.map((d) => d.person_id));
+      personIds.forEach((personId) => {
+        queryClient.invalidateQueries({ queryKey: ["documents", personId] });
+      });
+      queryClient.invalidateQueries({ queryKey: ["documents", "trash"] });
+    },
+  });
+}
+
+/** Permanently deletes every given trashed document right now
+ * (storage files + database rows), bypassing the 30-day wait.
+ * Irreversible. Runs sequentially rather than in one batched call,
+ * since each file also needs its own Storage removal. */
+export function useBulkPermanentlyDeleteDocuments() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (documents: Document[]) => {
+      const supabase = createClient();
+      for (const document of documents) {
+        await permanentlyDeleteFromTrash(supabase, document);
+      }
+      return documents;
+    },
+    onSuccess: (documents) => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "trash"] });
+      const personIds = new Set(documents.map((d) => d.person_id));
+      personIds.forEach((personId) => {
+        queryClient.invalidateQueries({ queryKey: ["documents", personId] });
+      });
+    },
+  });
+}
+
 export function useRenameDocument() {
   const queryClient = useQueryClient();
 

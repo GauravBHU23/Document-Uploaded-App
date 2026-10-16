@@ -14,8 +14,11 @@ export function usePeople(search: string) {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (search.trim()) {
-        query = query.ilike("full_name", `%${search.trim()}%`);
+      const trimmed = search.trim();
+      if (trimmed) {
+        // Matches name OR category -- searching "OBC" previously found
+        // nothing even though category is a real, filterable field.
+        query = query.or(`full_name.ilike.%${trimmed}%,category.ilike.%${trimmed}%`);
       }
 
       const { data, error } = await query;
@@ -74,6 +77,43 @@ export function useCreatePerson() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["people"] });
+    },
+  });
+}
+
+type UpdatePersonInput = {
+  personId: string;
+  fullName: string;
+  category?: string;
+  dateOfBirth?: string;
+  notes?: string;
+};
+
+export function useUpdatePerson() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: UpdatePersonInput) => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("people")
+        .update({
+          full_name: input.fullName,
+          category: input.category || null,
+          date_of_birth: input.dateOfBirth || null,
+          notes: input.notes || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", input.personId)
+        .select()
+        .single();
+
+      if (error) throw new Error(error.message);
+      return data as Person;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["people"] });
+      queryClient.invalidateQueries({ queryKey: ["people", "detail", variables.personId] });
     },
   });
 }

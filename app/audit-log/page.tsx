@@ -19,6 +19,7 @@ const ACTION_META: Record<
   { label: string; icon: "plus" | "trash" | "restore" | "pencil" | "x"; color: string }
 > = {
   person_created: { label: "created", icon: "plus", color: "emerald" },
+  person_updated: { label: "updated", icon: "pencil", color: "indigo" },
   person_deleted: { label: "deleted person", icon: "x", color: "red" },
   document_uploaded: { label: "uploaded", icon: "plus", color: "emerald" },
   document_trashed: { label: "moved to Trash", icon: "trash", color: "amber" },
@@ -83,6 +84,12 @@ function describeEntry(entry: AuditLogEntry): string {
   const meta = ACTION_META[entry.action];
   if (entry.action === "document_renamed" && entry.metadata) {
     return `renamed "${entry.metadata.from}" to "${entry.metadata.to}"`;
+  }
+  if (entry.action === "person_updated" && entry.metadata?.from_name && entry.metadata?.to_name) {
+    if (entry.metadata.from_name !== entry.metadata.to_name) {
+      return `renamed "${entry.metadata.from_name}" to "${entry.metadata.to_name}"`;
+    }
+    return `updated "${entry.metadata.to_name}"`;
   }
   if (entry.entity_type === "document") {
     const who = entry.person_label ? ` (${entry.person_label})` : "";

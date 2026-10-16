@@ -12,12 +12,13 @@ import PersonUploadLinkCard from "@/components/PersonUploadLinkCard";
 import QRCaptureTrigger from "@/components/QRCaptureTrigger";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { useAdmin } from "@/lib/auth/use-admin";
-import { usePerson } from "@/lib/people/hooks";
+import { usePerson, useUpdatePerson } from "@/lib/people/hooks";
 import { useDocuments, useBulkDeleteDocuments } from "@/lib/documents/hooks";
 import { useRealtimeDocuments } from "@/lib/documents/use-realtime-documents";
-import { getSignedUrl } from "@/lib/documents/upload";
+import { downloadDocumentsAsZip } from "@/lib/documents/zip";
 import { createClient } from "@/lib/supabase/client";
 import type { DocumentSource } from "@/lib/types";
+import NewPersonDialog from "@/app/dashboard/new-person-dialog";
 
 function formatTotalSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -46,9 +47,27 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDownloading, setBulkDownloading] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const bulkDelete = useBulkDeleteDocuments();
+  const updatePerson = useUpdatePerson();
   const confirm = useConfirm();
+
+  async function handleUpdate(values: {
+    fullName: string;
+    category?: string;
+    dateOfBirth?: string;
+    notes?: string;
+  }) {
+    if (!person) return;
+    try {
+      await updatePerson.mutateAsync({ personId: person.id, ...values });
+      toast.success("Saved");
+      setEditOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save changes");
+    }
+  }
 
   const totalSize = documents?.reduce((sum, d) => sum + d.size_bytes, 0) ?? 0;
 
@@ -87,26 +106,26 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
   }
 
   async function handleBulkDownload() {
-    if (selectedDocuments.length === 0) return;
+    if (selectedDocuments.length === 0 || !person) return;
     setBulkDownloading(true);
     try {
       const supabase = createClient();
-      for (const doc of selectedDocuments) {
-        const url = await getSignedUrl(supabase, doc.storage_path, 60);
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = blobUrl;
-        a.download = doc.label;
-        a.click();
-        URL.revokeObjectURL(blobUrl);
-        // Small gap between downloads -- back-to-back a.click() calls
-        // on several files in the same tick get silently dropped by
-        // some browsers' popup/download throttling.
-        await new Promise((resolve) => setTimeout(resolve, 300));
-      }
-      toast.success(`Downloaded ${selectedDocuments.length} document${selectedDocuments.length === 1 ? "" : "s"}`);
+      await downloadDocumentsAsZip(supabase, selectedDocuments, `${person.full_name}-documents`);
+      toast.success(`Downloaded ${selectedDocuments.length} document${selectedDocuments.length === 1 ? "" : "s"} as a zip`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not download all files");
+    } finally {
+      setBulkDownloading(false);
+    }
+  }
+
+  async function handleDownloadAll() {
+    if (!documents || documents.length === 0 || !person) return;
+    setBulkDownloading(true);
+    try {
+      const supabase = createClient();
+      await downloadDocumentsAsZip(supabase, documents, `${person.full_name}-documents`);
+      toast.success(`Downloaded all ${documents.length} documents as a zip`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not download all files");
     } finally {
@@ -164,6 +183,16 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
               >
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgba(255,255,255,0.18),transparent_55%)]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(true)}
+                  className="absolute right-4 top-4 flex items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1.5 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/25"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                  </svg>
+                  Edit
+                </button>
                 <div
                   className="relative flex flex-wrap items-center gap-x-6 gap-y-2 text-sm"
                   style={{ textShadow: "0 1px 10px rgba(0,0,0,0.15)" }}
@@ -234,13 +263,32 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
                     </span>
                   )}
                 </div>
-                {documents && documents.length > 0 && (
+                {documents && documents.length > 0 && !selectMode && (
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleDownloadAll}
+                      disabled={bulkDownloading}
+                      className="text-sm font-medium text-indigo-600 hover:underline disabled:opacity-50 dark:text-indigo-400"
+                    >
+                      {bulkDownloading ? "Zipping..." : "Download all"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectMode(true)}
+                      className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                    >
+                      Select
+                    </button>
+                  </div>
+                )}
+                {documents && documents.length > 0 && selectMode && (
                   <button
                     type="button"
-                    onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+                    onClick={exitSelectMode}
                     className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
                   >
-                    {selectMode ? "Cancel" : "Select"}
+                    Cancel
                   </button>
                 )}
               </div>
@@ -271,7 +319,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
                           disabled={selectedIds.size === 0 || bulkDownloading}
                           className="rounded-lg border border-indigo-300 bg-white px-3 py-1.5 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-800 dark:bg-zinc-950 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
                         >
-                          {bulkDownloading ? "Downloading..." : "Download"}
+                          {bulkDownloading ? "Zipping..." : "Download"}
                         </button>
                         <button
                           type="button"
@@ -402,6 +450,16 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
         )}
         </div>
       </main>
+
+      {person && (
+        <NewPersonDialog
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          onSubmit={handleUpdate}
+          submitting={updatePerson.isPending}
+          person={person}
+        />
+      )}
     </div>
   );
 }

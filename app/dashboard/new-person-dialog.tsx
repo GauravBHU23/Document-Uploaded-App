@@ -1,18 +1,24 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import type { Person } from "@/lib/types";
+
+type PersonFormValues = {
+  fullName: string;
+  category?: string;
+  dateOfBirth?: string;
+  notes?: string;
+};
 
 type NewPersonDialogProps = {
   open: boolean;
   onClose: () => void;
-  onSubmit: (values: {
-    fullName: string;
-    category?: string;
-    dateOfBirth?: string;
-    notes?: string;
-  }) => void;
+  onSubmit: (values: PersonFormValues) => void;
   submitting: boolean;
+  /** When set, the dialog edits this person instead of creating a new
+   * one -- same form, different copy/icon/submit label. */
+  person?: Person | null;
 };
 
 const inputClasses =
@@ -25,7 +31,10 @@ export default function NewPersonDialog({
   onClose,
   onSubmit,
   submitting,
+  person,
 }: NewPersonDialogProps) {
+  const isEdit = Boolean(person);
+
   const [fullName, setFullName] = useState("");
   const [category, setCategory] = useState("");
   const [customCategory, setCustomCategory] = useState(false);
@@ -40,6 +49,26 @@ export default function NewPersonDialog({
     setNotes("");
   }
 
+  // Seed the form from the person being edited every time the dialog
+  // opens for them -- not on every `person` change, since re-running
+  // this while the admin is mid-edit (e.g. a background refetch
+  // updating the `person` object) would stomp on unsaved input.
+  useEffect(() => {
+    if (!open) return;
+    if (person) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFullName(person.full_name);
+      const isPreset = CATEGORY_OPTIONS.includes(person.category ?? "");
+      setCategory(person.category ?? "");
+      setCustomCategory(Boolean(person.category) && !isPreset);
+      setDateOfBirth(person.date_of_birth ?? "");
+      setNotes(person.notes ?? "");
+    } else {
+      reset();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, person?.id]);
+
   function handleClose() {
     onClose();
   }
@@ -53,7 +82,7 @@ export default function NewPersonDialog({
       dateOfBirth: dateOfBirth || undefined,
       notes: notes.trim() || undefined,
     });
-    reset();
+    if (!isEdit) reset();
   }
 
   return (
@@ -89,21 +118,29 @@ export default function NewPersonDialog({
                 </svg>
               </button>
               <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white shadow-md backdrop-blur-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-6 w-6">
-                  <path fillRule="evenodd" d="M10 2a5 5 0 00-5 5v1a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z" clipRule="evenodd" />
-                </svg>
+                {isEdit ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-6 w-6">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-6 w-6">
+                    <path fillRule="evenodd" d="M10 2a5 5 0 00-5 5v1a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z" clipRule="evenodd" />
+                  </svg>
+                )}
               </div>
               <h2
                 className="relative mt-3 text-xl font-bold text-white"
                 style={{ textShadow: "0 1px 10px rgba(0,0,0,0.15)" }}
               >
-                New Person
+                {isEdit ? "Edit Person" : "New Person"}
               </h2>
               <p
                 className="relative mt-0.5 text-sm font-medium text-white/90"
                 style={{ textShadow: "0 1px 10px rgba(0,0,0,0.15)" }}
               >
-                Create a folder to keep their documents organized.
+                {isEdit
+                  ? "Update their details. Their documents stay exactly as they are."
+                  : "Create a folder to keep their documents organized."}
               </p>
             </div>
 
@@ -218,8 +255,10 @@ export default function NewPersonDialog({
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                       </svg>
-                      Adding...
+                      {isEdit ? "Saving..." : "Adding..."}
                     </span>
+                  ) : isEdit ? (
+                    "Save Changes"
                   ) : (
                     "Add Person"
                   )}

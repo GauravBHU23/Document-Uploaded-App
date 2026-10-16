@@ -9,6 +9,7 @@ import {
   getDownloadUrl,
   uploadDocumentForPin,
 } from "@/lib/pin-access/api";
+import DocumentPreviewModal from "@/components/DocumentPreviewModal";
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
@@ -37,6 +38,8 @@ export default function PersonViewPage({ params }: { params: Promise<{ id: strin
   const [documents, setDocuments] = useState<PinDocument[] | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<PinDocument | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -61,13 +64,32 @@ export default function PersonViewPage({ params }: { params: Promise<{ id: strin
 
   async function handleOpen(doc: PinDocument) {
     setDownloadingId(doc.id);
+    setPreviewDoc(doc);
+    setPreviewUrl(null);
     try {
       const url = await getDownloadUrl(personId, pin, doc.id);
-      window.open(url, "_blank", "noopener,noreferrer");
+      setPreviewUrl(url);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not open file");
+      setPreviewDoc(null);
     } finally {
       setDownloadingId(null);
+    }
+  }
+
+  async function handlePreviewDownload() {
+    if (!previewUrl || !previewDoc) return;
+    try {
+      const response = await fetch(previewUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = previewDoc.label;
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      toast.error("Could not download file");
     }
   }
 
@@ -258,6 +280,15 @@ export default function PersonViewPage({ params }: { params: Promise<{ id: strin
           </motion.div>
         )}
       </div>
+
+      <DocumentPreviewModal
+        open={Boolean(previewDoc)}
+        onClose={() => setPreviewDoc(null)}
+        url={previewUrl}
+        label={previewDoc?.label ?? ""}
+        mimeType={previewDoc?.mime_type ?? ""}
+        onDownload={handlePreviewDownload}
+      />
     </div>
   );
 }

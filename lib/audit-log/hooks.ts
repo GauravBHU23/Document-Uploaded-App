@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export type AuditAction =
   | "person_created"
+  | "person_updated"
   | "person_deleted"
   | "document_uploaded"
   | "document_trashed"
