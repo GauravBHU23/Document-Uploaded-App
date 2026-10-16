@@ -4,6 +4,9 @@ import { use, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { IDLE_TIMEOUT_MS } from "@/lib/session/use-idle-logout";
+
+const IDLE_TIMEOUT_MINUTES = IDLE_TIMEOUT_MS / 60_000;
 
 const FEATURES = [
   { title: "Capture on phone, land on desktop", desc: "Upload instantly syncs across every signed-in device." },
@@ -150,7 +153,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
                     clipRule="evenodd"
                   />
                 </svg>
-                You were signed out after 10 minutes of inactivity, to keep this account secure.
+                You were signed out after {IDLE_TIMEOUT_MINUTES} minutes of inactivity, to keep this account secure.
               </motion.p>
             )}
 

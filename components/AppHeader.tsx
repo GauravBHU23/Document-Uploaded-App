@@ -17,7 +17,7 @@ type AppHeaderProps = {
 
 export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps) {
   const router = useRouter();
-  const { secondsLeft, staySignedIn, idleTimeoutMs } = useIdleLogout();
+  const { secondsLeft, remainingMs, staySignedIn, idleTimeoutMs } = useIdleLogout();
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -71,7 +71,7 @@ export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps)
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <SessionBadge idleTimeoutMs={idleTimeoutMs} />
+          <SessionBadge remainingMs={remainingMs} idleTimeoutMs={idleTimeoutMs} />
           <ThemeToggle />
           <motion.button
             whileHover={{ scale: 1.03 }}
