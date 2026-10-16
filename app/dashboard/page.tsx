@@ -83,40 +83,44 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
-            className="accent-gradient relative mb-7 overflow-hidden rounded-2xl p-6 text-white shadow-lg shadow-indigo-900/10 sm:p-8 lg:p-10"
+            className="relative mb-7 overflow-hidden rounded-2xl bg-gradient-to-br from-[#4b32d6] via-[#6246ea] to-[#8b6ae8] p-6 text-white shadow-lg shadow-indigo-900/20 sm:p-8 lg:p-10"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.2),transparent_55%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.18),transparent_55%)]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
             <div className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
-            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div
+              className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"
+              style={{ textShadow: "0 1px 10px rgba(0,0,0,0.15)" }}
+            >
               <div>
-                <p className="text-sm font-medium text-white/75">Welcome back</p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">
+                <p className="text-sm font-semibold text-white/90">Welcome back</p>
+                <h2 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
                   {admin?.display_name || "Your"} Document Workspace
                 </h2>
-                <p className="mt-2 max-w-lg text-sm text-white/75 sm:text-base">
+                <p className="mt-2 max-w-lg text-sm font-medium text-white/90 sm:text-base">
                   Every person&apos;s documents, organized and ready — synced instantly across your devices.
                 </p>
               </div>
               <div className="flex shrink-0 gap-3">
-                <div className="flex items-center gap-2.5 rounded-xl bg-white/15 px-4 py-3 backdrop-blur-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-white/90">
+                <div className="flex items-center gap-2.5 rounded-xl bg-white/20 px-4 py-3 backdrop-blur-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-white">
                     <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
                   </svg>
                   <div>
-                    <p className="text-xl font-semibold leading-none">{people?.length ?? "–"}</p>
-                    <p className="text-xs text-white/70">
+                    <p className="text-xl font-bold leading-none text-white">{people?.length ?? "–"}</p>
+                    <p className="text-xs font-medium text-white/80">
                       {people?.length === 1 ? "person" : "people"}
                     </p>
                   </div>
                 </div>
-                <div className="hidden items-center gap-2.5 rounded-xl bg-white/15 px-4 py-3 backdrop-blur-sm sm:flex">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-white/90">
+                <div className="hidden items-center gap-2.5 rounded-xl bg-white/20 px-4 py-3 backdrop-blur-sm sm:flex">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-white">
                     <path fillRule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5h-7.5z" clipRule="evenodd" />
                     <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
                   </svg>
                   <div>
-                    <p className="text-xl font-semibold leading-none">Secure</p>
-                    <p className="text-xs text-white/70">PIN-protected</p>
+                    <p className="text-xl font-bold leading-none text-white">Secure</p>
+                    <p className="text-xs font-medium text-white/80">PIN-protected</p>
                   </div>
                 </div>
               </div>

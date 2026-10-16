@@ -15,6 +15,9 @@ type NewPersonDialogProps = {
   submitting: boolean;
 };
 
+const inputClasses =
+  "mt-1.5 w-full rounded-xl border border-zinc-300 bg-white/80 px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-all placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-50 dark:placeholder:text-zinc-600";
+
 export default function NewPersonDialog({
   open,
   onClose,
@@ -31,6 +34,10 @@ export default function NewPersonDialog({
     setCategory("");
     setDateOfBirth("");
     setNotes("");
+  }
+
+  function handleClose() {
+    onClose();
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -52,8 +59,8 @@ export default function NewPersonDialog({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          onClick={handleClose}
         >
           <motion.div
             initial={{ opacity: 0, y: 32, scale: 0.98 }}
@@ -61,21 +68,45 @@ export default function NewPersonDialog({
             exit={{ opacity: 0, y: 24, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 340, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
-            className="glass-surface w-full max-w-sm rounded-t-2xl border border-zinc-200/80 p-6 shadow-2xl sm:rounded-2xl dark:border-zinc-800/80"
+            className="glass-surface relative w-full max-w-md overflow-hidden rounded-t-3xl border border-zinc-200/80 shadow-2xl sm:rounded-3xl dark:border-zinc-800/80"
           >
-            <div className="accent-gradient mb-3 flex h-10 w-10 items-center justify-center rounded-xl text-white">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
-                <path fillRule="evenodd" d="M10 2a5 5 0 00-5 5v1a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z" clipRule="evenodd" />
-              </svg>
+            {/* Decorative header strip */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#4b32d6] via-[#6246ea] to-[#8b6ae8] px-6 pb-6 pt-7">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.2),transparent_55%)]" />
+              <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+              <button
+                type="button"
+                onClick={handleClose}
+                className="absolute right-4 top-4 rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/15 hover:text-white"
+                aria-label="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                </svg>
+              </button>
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white shadow-md backdrop-blur-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-6 w-6">
+                  <path fillRule="evenodd" d="M10 2a5 5 0 00-5 5v1a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <h2
+                className="relative mt-3 text-xl font-bold text-white"
+                style={{ textShadow: "0 1px 10px rgba(0,0,0,0.15)" }}
+              >
+                New Person
+              </h2>
+              <p
+                className="relative mt-0.5 text-sm font-medium text-white/90"
+                style={{ textShadow: "0 1px 10px rgba(0,0,0,0.15)" }}
+              >
+                Create a folder to keep their documents organized.
+              </p>
             </div>
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              New Person
-            </h2>
-            <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-              Create a folder to keep their documents organized.
-            </p>
 
-            <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
+            <form
+              onSubmit={handleSubmit}
+              className="flex max-h-[65vh] flex-col gap-4 overflow-y-auto px-6 py-5"
+            >
               <div>
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Full name
@@ -83,63 +114,77 @@ export default function NewPersonDialog({
                 <input
                   autoFocus
                   required
+                  placeholder="e.g. Priya Sharma"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white/80 px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-50"
+                  className={inputClasses}
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Category
+                  </label>
+                  <input
+                    placeholder="e.g. Student"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className={inputClasses}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Date of birth
+                  </label>
+                  <input
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    className={`${inputClasses} [color-scheme:inherit]`}
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Category (optional)
-                </label>
-                <input
-                  placeholder="e.g. Student"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white/80 px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Date of birth (optional)
-                </label>
-                <input
-                  type="date"
-                  value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white/80 px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Notes (optional)
+                  Notes
                 </label>
                 <textarea
                   rows={2}
+                  placeholder="Anything worth remembering about this person..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white/80 px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-50"
+                  className={`${inputClasses} resize-none`}
                 />
               </div>
 
-              <div className="mt-2 flex gap-2">
+              <div className="mt-1 flex gap-2.5">
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="flex-1 rounded-xl border border-zinc-300 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
                 >
                   Cancel
                 </button>
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
                   type="submit"
                   disabled={submitting || !fullName.trim()}
-                  className="accent-gradient flex-1 rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-indigo-600/20 transition-opacity hover:opacity-95 disabled:opacity-50"
+                  className="relative flex-1 overflow-hidden rounded-xl bg-gradient-to-br from-[#4b32d6] via-[#6246ea] to-[#8b6ae8] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-600/25 transition-opacity hover:opacity-95 disabled:opacity-50"
                 >
-                  {submitting ? "Adding..." : "Add"}
-                </button>
+                  {submitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                      </svg>
+                      Adding...
+                    </span>
+                  ) : (
+                    "Add Person"
+                  )}
+                </motion.button>
               </div>
             </form>
           </motion.div>

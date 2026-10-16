@@ -51,31 +51,33 @@ export default function LoginPage() {
           initial={{ opacity: 0, x: -24 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="relative hidden flex-col justify-between overflow-hidden p-12 text-white lg:flex"
+          className="relative hidden flex-col gap-6 overflow-hidden p-12 text-white lg:flex"
         >
-          <div className="accent-gradient absolute inset-0" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.18),transparent_55%)]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#4b32d6] via-[#6246ea] to-[#8b6ae8]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent_55%)]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
 
-          <div className="relative">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-                  <path fillRule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5h-7.5z" clipRule="evenodd" />
-                  <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
-                </svg>
-              </div>
-              <span className="text-lg font-semibold tracking-tight">DocVault</span>
+          <div className="relative flex items-center gap-2.5" style={{ textShadow: "0 1px 12px rgba(0,0,0,0.18)" }}>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-white">
+                <path fillRule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5h-7.5z" clipRule="evenodd" />
+                <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
+              </svg>
             </div>
-
-            <h1 className="mt-16 max-w-sm text-4xl font-semibold leading-tight tracking-tight">
-              Every document, perfectly organized.
-            </h1>
-            <p className="mt-4 max-w-sm text-white/80">
-              A private workspace for managing documents across every person you handle paperwork for.
-            </p>
+            <span className="text-lg font-semibold tracking-tight text-white">DocVault</span>
           </div>
 
-          <div className="relative flex flex-col gap-5">
+          <h1
+            className="relative max-w-sm text-4xl font-bold leading-tight tracking-tight text-white"
+            style={{ textShadow: "0 1px 12px rgba(0,0,0,0.18)" }}
+          >
+            Every document, perfectly organized.
+          </h1>
+
+          <div className="relative flex flex-col gap-6" style={{ textShadow: "0 1px 10px rgba(0,0,0,0.15)" }}>
+            <p className="max-w-sm font-medium leading-relaxed text-white/95">
+              A private workspace for managing documents across every person you handle paperwork for.
+            </p>
             {FEATURES.map((feature, i) => (
               <motion.div
                 key={feature.title}
@@ -84,14 +86,14 @@ export default function LoginPage() {
                 transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
                 className="flex gap-3"
               >
-                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/15">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 text-white">
                     <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">{feature.title}</p>
-                  <p className="text-sm text-white/70">{feature.desc}</p>
+                  <p className="text-sm font-semibold text-white">{feature.title}</p>
+                  <p className="text-sm font-medium text-white/90">{feature.desc}</p>
                 </div>
               </motion.div>
             ))}

@@ -52,29 +52,38 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="accent-gradient relative mb-5 overflow-hidden rounded-2xl p-5 text-white shadow-md shadow-indigo-900/10"
+                className="relative mb-5 overflow-hidden rounded-2xl bg-gradient-to-br from-[#4b32d6] via-[#6246ea] to-[#8b6ae8] p-5 text-white shadow-md shadow-indigo-900/20"
               >
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgba(255,255,255,0.18),transparent_55%)]" />
-                <div className="relative flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                <div
+                  className="relative flex flex-wrap items-center gap-x-6 gap-y-2 text-sm"
+                  style={{ textShadow: "0 1px 10px rgba(0,0,0,0.15)" }}
+                >
                   <div>
-                    <p className="text-white/70">Documents</p>
-                    <p className="text-lg font-semibold">{documents?.length ?? "–"}</p>
+                    <p className="font-medium text-white/85">Documents</p>
+                    <p className="text-lg font-bold text-white">{documents?.length ?? "–"}</p>
                   </div>
                   <div>
-                    <p className="text-white/70">Total size</p>
-                    <p className="text-lg font-semibold">
+                    <p className="font-medium text-white/85">Total size</p>
+                    <p className="text-lg font-bold text-white">
                       {documents ? formatTotalSize(totalSize) : "–"}
                     </p>
                   </div>
                   {person.date_of_birth && (
                     <div>
-                      <p className="text-white/70">Date of birth</p>
-                      <p className="text-lg font-semibold">{person.date_of_birth}</p>
+                      <p className="font-medium text-white/85">Date of birth</p>
+                      <p className="text-lg font-bold text-white">{person.date_of_birth}</p>
                     </div>
                   )}
                 </div>
                 {person.notes && (
-                  <p className="relative mt-3 max-w-lg text-sm text-white/80">{person.notes}</p>
+                  <p
+                    className="relative mt-3 max-w-lg text-sm font-medium text-white/90"
+                    style={{ textShadow: "0 1px 10px rgba(0,0,0,0.15)" }}
+                  >
+                    {person.notes}
+                  </p>
                 )}
               </motion.div>
 

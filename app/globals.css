@@ -5,8 +5,8 @@
   --foreground: #16161d;
   --surface: #ffffff;
   --surface-border: #e7e7f0;
-  --accent: #6246ea;
-  --accent-2: #a78bfa;
+  --accent: #4b32d6;
+  --accent-2: #8b6ae8;
   --accent-contrast: #ffffff;
   --muted: #6b7280;
 }
@@ -60,6 +60,19 @@ body {
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
+}
+
+/* Native date input: the browser's calendar-picker icon defaults to
+   a dark glyph that disappears against our dark-mode inputs. Force
+   the input's color-scheme so the whole native picker UI (icon +
+   popup calendar) renders in the right palette automatically. */
+input[type="date"] {
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  input[type="date"] {
+    color-scheme: dark;
+  }
 }
 
 @layer utilities {
