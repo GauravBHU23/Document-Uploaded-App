@@ -93,6 +93,17 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.05 }}
               >
+                <div className="mb-3 flex gap-2.5">
+                  <Link
+                    href={`/people/${person.id}/capture`}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200/80 bg-white/70 px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm transition-colors hover:bg-zinc-100 dark:border-zinc-700/80 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                      <path fillRule="evenodd" d="M1 5.25A2.25 2.25 0 013.25 3h.5c.966 0 1.8.65 2.063 1.546l.044.154A.25.25 0 006.1 4.9h7.8a.25.25 0 00.243-.3l.044-.154A2.25 2.25 0 0116.25 3h.5A2.25 2.25 0 0119 5.25v9.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75v-9.5zM10 7a3.5 3.5 0 100 7 3.5 3.5 0 000-7z" clipRule="evenodd" />
+                    </svg>
+                    Capture Photo
+                  </Link>
+                </div>
                 <UploadDropzone adminId={admin.id} personId={person.id} />
                 <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
                   Need to merge PDFs or resize a photo first?{" "}

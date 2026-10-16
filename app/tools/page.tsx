@@ -28,6 +28,17 @@ const TOOLS = [
     ),
     gradient: "from-sky-400 to-blue-500",
   },
+  {
+    href: "/tools/signature",
+    title: "Signature",
+    description: "Draw a signature, or photograph one on paper with the background cleaned up.",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
+        <path d="M3.75 3a.75.75 0 00-.75.75v16.5c0 .414.336.75.75.75H20.25a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75H3.75zM6 15.26c2.07-2.956 4.573-4.52 7.5-4.52a.75.75 0 010 1.5c-2.414 0-4.546 1.263-6.372 3.76h1.372a.75.75 0 010 1.5H5a.75.75 0 01-.75-.75v-3.5a.75.75 0 011.5 0v2.01z" />
+      </svg>
+    ),
+    gradient: "from-fuchsia-400 to-pink-500",
+  },
 ];
 
 export default function ToolsPage() {
@@ -36,8 +47,8 @@ export default function ToolsPage() {
       <AppHeader title="Tools" subtitle="Everything you need, without leaving the app" backHref="/dashboard" />
 
       <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 2xl:px-16">
-        <div className="mx-auto w-full max-w-2xl">
-          <ul className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2">
+        <div className="mx-auto w-full max-w-4xl">
+          <ul className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {TOOLS.map((tool, i) => (
               <motion.li
                 key={tool.href}
