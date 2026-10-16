@@ -32,6 +32,16 @@ export function useAuditLog(page: number) {
     queryKey: ["audit-log", page],
     queryFn: async () => {
       const supabase = createClient();
+
+      // Lazily sweep anything past the 30-day retention window before
+      // listing, same reasoning as Trash's purge-on-load (see
+      // supabase/migrations/0012_audit_log_retention.sql) -- only on
+      // the first page, so paging through older entries doesn't
+      // re-trigger the sweep on every page change.
+      if (page === 0) {
+        await supabase.rpc("purge_expired_audit_log");
+      }
+
       const from = page * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
