@@ -8,7 +8,10 @@ import { NextResponse, type NextRequest } from "next/server";
 // the pin-access Edge Function on every request, not from this route
 // being reachable. See supabase/functions/pin-access and
 // supabase/migrations/0002_person_pin_access.sql.
-const PUBLIC_PATHS = ["/login", "/view"];
+// /offline is the PWA offline fallback page (see public/sw.js). It
+// must be reachable without a session: it is shown precisely when the
+// service worker cannot reach the network to even check auth state.
+const PUBLIC_PATHS = ["/login", "/view", "/offline"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(

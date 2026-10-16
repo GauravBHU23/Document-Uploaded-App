@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
+import InstallPrompt from "@/components/InstallPrompt";
 import { useAdmin } from "@/lib/auth/use-admin";
 import { usePeople, useCreatePerson, useDeletePerson } from "@/lib/people/hooks";
 import NewPersonDialog from "./new-person-dialog";
@@ -74,6 +75,8 @@ export default function DashboardPage() {
       />
 
       <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
+        <InstallPrompt />
+
         {/* Hero / stat strip */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
