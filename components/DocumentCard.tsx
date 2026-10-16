@@ -69,14 +69,14 @@ export default function DocumentCard({ document }: { document: Document }) {
   async function handleDelete() {
     const confirmed = await confirm({
       title: `Delete "${document.label}"?`,
-      description: "This cannot be undone.",
+      description: "It will move to Trash and can be restored within 30 days.",
       confirmLabel: "Delete",
       danger: true,
     });
     if (!confirmed) return;
     try {
       await deleteDocument.mutateAsync(document);
-      toast.success("Document deleted");
+      toast.success("Moved to Trash");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not delete");
     }

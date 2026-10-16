@@ -22,6 +22,7 @@ export type Document = {
   size_bytes: number;
   source: DocumentSource;
   created_at: string;
+  deleted_at: string | null;
 };
 
 export const DOCUMENT_LABEL_SUGGESTIONS = [
