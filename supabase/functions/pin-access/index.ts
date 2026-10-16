@@ -3,16 +3,23 @@
 // Lets a person view and download their own documents using a PIN,
 // with no login/signup. This function is the ONLY place that ever
 // uses the service role key -- it lives here, in Supabase's secure
-// Edge Function environment (set as a secret via `supabase secrets
-// set`), and is never present in the Next.js app or any browser
-// bundle. The Next.js app only ever talks to this function over
-// HTTPS with the person's id, PIN, and (for downloads) a document id.
+// Edge Function environment (provided automatically as
+// SUPABASE_SERVICE_ROLE_KEY), and is never present in the Next.js app
+// or any browser bundle. The Next.js app only ever talks to this
+// function over HTTPS with the person's id, PIN, and (for downloads)
+// a document id.
 //
-// Every request re-verifies the PIN against the `verify_person_pin`
-// RPC (defined in supabase/migrations/0002_person_pin_access.sql,
-// which itself rate-limits attempts). There is no session token to
-// steal or replay beyond the PIN itself -- if the PIN is wrong or the
-// person has no PIN set, every action below is refused.
+// Every request re-verifies the PIN against the verify_person_pin
+// RPC (defined in supabase/migrations/0002_person_pin_access.sql and
+// fixed in 0003_fix_pin_rate_limit.sql), which rate-limits attempts
+// to 8 per 10 minutes per person. There is no session token to steal
+// or replay beyond the PIN itself.
+//
+// list_documents_for_pin returns a `pin_valid` flag on every row (or
+// a single row with pin_valid=false and every other column null when
+// the PIN is wrong) rather than raising an exception -- raising would
+// roll back the attempt-counter row that verify_person_pin just
+// inserted in the same call, silently defeating the rate limit.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -32,12 +39,39 @@ function json(body: unknown, status = 200) {
   });
 }
 
+type PinRow = {
+  pin_valid: boolean;
+  id: string | null;
+  label: string | null;
+  mime_type: string | null;
+  size_bytes: number | null;
+  created_at: string | null;
+  storage_path: string | null;
+};
+
 type RequestBody = {
   action: "list" | "download" | "person_name";
   personId: string;
   pin?: string;
   documentId?: string;
 };
+
+async function listForPin(
+  admin: ReturnType<typeof createClient>,
+  personId: string,
+  pin: string,
+): Promise<{ valid: boolean; rows: PinRow[] }> {
+  const { data, error } = await admin.rpc("list_documents_for_pin", {
+    p_person_id: personId,
+    p_pin: pin,
+  });
+
+  if (error) return { valid: false, rows: [] };
+
+  const rows = (data as PinRow[]) ?? [];
+  const valid = rows.length === 0 ? false : rows[0].pin_valid;
+  return { valid, rows: valid ? rows : [] };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -74,40 +108,36 @@ Deno.serve(async (req) => {
   }
 
   if (action === "list") {
-    const { data, error } = await admin.rpc("list_documents_for_pin", {
-      p_person_id: personId,
-      p_pin: pin,
-    });
+    const { valid, rows } = await listForPin(admin, personId, pin);
 
-    if (error) {
+    if (!valid) {
       return json({ error: "Invalid PIN or too many attempts" }, 401);
     }
 
-    return json({ documents: data });
+    // rows may include a pin_valid-only marker row (id: null) when the
+    // person has zero documents -- filter that out of the response.
+    const documents = rows
+      .filter((r) => r.id !== null)
+      .map(({ pin_valid: _pinValid, ...doc }) => doc);
+    return json({ documents });
   }
 
   if (action === "download") {
     if (!documentId) return json({ error: "documentId is required" }, 400);
 
-    // Re-verify the PIN and get this person's documents, then confirm
-    // the requested documentId actually belongs to them before ever
-    // creating a signed URL -- this is what stops a person with one
-    // valid PIN+link from downloading another person's file by
-    // guessing a documentId.
-    const { data: docs, error: listError } = await admin.rpc("list_documents_for_pin", {
-      p_person_id: personId,
-      p_pin: pin,
-    });
+    const { valid, rows } = await listForPin(admin, personId, pin);
 
-    if (listError) {
+    if (!valid) {
       return json({ error: "Invalid PIN or too many attempts" }, 401);
     }
 
-    const match = (docs as Array<{ id: string; storage_path: string }> | null)?.find(
-      (d) => d.id === documentId,
-    );
+    // Confirming the requested documentId is actually in this
+    // person's own list (just fetched under the same verified PIN)
+    // is what stops a valid PIN holder from downloading another
+    // person's file by guessing a documentId.
+    const match = rows.find((d) => d.id === documentId);
 
-    if (!match) {
+    if (!match || !match.storage_path) {
       return json({ error: "Document not found" }, 404);
     }
 
