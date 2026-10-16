@@ -1,0 +1,14 @@
+-- Enables Supabase Realtime (Postgres logical replication over
+-- websockets) for the documents table. This is the mechanism behind
+-- the app's core "upload on phone, appears on desktop instantly"
+-- requirement, which was planned from the start but never actually
+-- wired up -- the client never subscribed to anything, so a mobile
+-- upload only ever showed up on a desktop session after a manual
+-- refresh or tab-focus refetch.
+--
+-- RLS still applies to realtime changefeeds: a client only receives
+-- postgres_changes events for rows its own session could SELECT
+-- under the existing "admins manage their own documents" policy, so
+-- this does not loosen any access control -- it only pushes the same
+-- rows the admin could already read, as they change.
+alter publication supabase_realtime add table public.documents;

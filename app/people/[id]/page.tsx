@@ -13,6 +13,7 @@ import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { useAdmin } from "@/lib/auth/use-admin";
 import { usePerson } from "@/lib/people/hooks";
 import { useDocuments, useBulkDeleteDocuments } from "@/lib/documents/hooks";
+import { useRealtimeDocuments } from "@/lib/documents/use-realtime-documents";
 import { getSignedUrl } from "@/lib/documents/upload";
 import { createClient } from "@/lib/supabase/client";
 import type { DocumentSource } from "@/lib/types";
@@ -36,6 +37,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
   const { data: admin } = useAdmin();
   const { data: person, isLoading: personLoading, isError: personError } = usePerson(personId);
   const { data: documents, isLoading: documentsLoading } = useDocuments(personId);
+  useRealtimeDocuments(personId);
 
   const [docSearch, setDocSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<DocumentSource | "all">("all");
