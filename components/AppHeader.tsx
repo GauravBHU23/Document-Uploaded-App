@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import ThemeToggle from "@/components/ThemeToggle";
 import IdleWarningModal from "@/components/IdleWarningModal";
 import SessionBadge from "@/components/SessionBadge";
-import { useIdleLogout } from "@/lib/session/use-idle-logout";
+import { useIdleLogout, clearLastActivity } from "@/lib/session/use-idle-logout";
 
 type AppHeaderProps = {
   title: string;
@@ -22,6 +22,7 @@ export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps)
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
+    clearLastActivity();
     router.push("/login");
     router.refresh();
   }

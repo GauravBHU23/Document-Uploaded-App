@@ -4,7 +4,7 @@ import { use, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
-import { IDLE_TIMEOUT_MS } from "@/lib/session/use-idle-logout";
+import { IDLE_TIMEOUT_MS, clearLastActivity } from "@/lib/session/use-idle-logout";
 
 const IDLE_TIMEOUT_MINUTES = IDLE_TIMEOUT_MS / 60_000;
 
@@ -50,6 +50,13 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
       setError("Login failed. Check your email and password.");
       return;
     }
+
+    // Clear any stale activity timestamp left over from a previous
+    // session (e.g. an idle logout) so this fresh login always starts
+    // its own idle clock from now -- otherwise useIdleLogout reads a
+    // timestamp that's already in the past and logs the admin straight
+    // back out on the first 1s tick. See clearLastActivity's docstring.
+    clearLastActivity();
 
     router.push(resolvedSearchParams.redirect || "/dashboard");
     router.refresh();

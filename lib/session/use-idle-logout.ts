@@ -28,6 +28,20 @@ function writeLastActivity(ts: number) {
   }
 }
 
+/** Clears the stored activity timestamp. Must be called on sign-out
+ * (idle or manual) -- otherwise the next login reads a timestamp
+ * that's already far in the past (from the session that just got
+ * logged out), computeRemainingMs() returns <= 0 immediately, and the
+ * very first 1s tick logs the admin straight back out again before
+ * they can even click anything to record fresh activity. */
+export function clearLastActivity() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Best-effort; nothing to fall back to.
+  }
+}
+
 /** How much idle time is left right now, based on the stored
  * last-activity timestamp -- NOT reset just because this function
  * (or the component calling it) happens to run again, e.g. on a page
@@ -61,17 +75,28 @@ export function useIdleLogout() {
   // value is reconciled by the effect below immediately after mount.
   const [remainingMs, setRemainingMs] = useState(IDLE_TIMEOUT_MS);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Guards against the 1s interval firing handleLogout more than once:
+  // signOut() is async, so without this, every tick that elapses while
+  // the first sign-out is still in flight sees computeRemainingMs()
+  // still <= 0 and fires a second (third, fourth...) overlapping
+  // signOut() + router.push(), which is where the flaky "logs out
+  // twice" / "timer doesn't behave" symptoms came from.
+  const loggingOutRef = useRef(false);
 
   const secondsLeft = remainingMs <= WARNING_BEFORE_MS ? Math.max(0, Math.ceil(remainingMs / 1000)) : null;
 
   const handleLogout = useCallback(async () => {
+    if (loggingOutRef.current) return;
+    loggingOutRef.current = true;
     const supabase = createClient();
     await supabase.auth.signOut();
+    clearLastActivity();
     router.push("/login?reason=idle");
     router.refresh();
   }, [router]);
 
   const recordActivity = useCallback(() => {
+    if (loggingOutRef.current) return;
     writeLastActivity(Date.now());
     setRemainingMs(IDLE_TIMEOUT_MS);
   }, []);
