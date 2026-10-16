@@ -5,14 +5,6 @@ import { motion } from "framer-motion";
 export default function OfflinePage() {
   return (
     <div className="relative flex flex-1 items-center justify-center overflow-hidden px-4">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="animate-float-slow absolute -left-24 -top-24 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl dark:bg-indigo-500/20" />
-        <div
-          className="animate-float-slow absolute -bottom-32 right-[-6rem] h-96 w-96 rounded-full bg-violet-400/20 blur-3xl dark:bg-violet-500/20"
-          style={{ animationDelay: "2.5s" }}
-        />
-      </div>
-
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

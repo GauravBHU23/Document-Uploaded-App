@@ -44,15 +44,6 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex flex-1 overflow-hidden">
-      {/* Ambient decorative blobs */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="animate-float-slow absolute -left-24 -top-24 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl dark:bg-indigo-500/20" />
-        <div
-          className="animate-float-slow absolute -bottom-32 right-[-6rem] h-96 w-96 rounded-full bg-violet-400/20 blur-3xl dark:bg-violet-500/20"
-          style={{ animationDelay: "2.5s" }}
-        />
-      </div>
-
       <div className="relative z-10 flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-10">
       <div className="glass-surface grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-3xl border border-zinc-200/70 shadow-2xl shadow-indigo-950/10 lg:grid-cols-2 dark:border-zinc-800/70">
         {/* Left: brand / feature panel (desktop only) */}
@@ -216,10 +207,6 @@ export default function LoginPage() {
                 )}
               </button>
             </form>
-
-            <p className="mt-6 text-center text-xs text-zinc-400 dark:text-zinc-600">
-              Authorized administrators only. No public registration.
-            </p>
           </motion.div>
         </div>
       </div>

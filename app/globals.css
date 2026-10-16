@@ -22,10 +22,10 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #09090f;
+    --background: #121220;
     --foreground: #f2f2f7;
-    --surface: #131320;
-    --surface-border: #26263a;
+    --surface: #1a1a2c;
+    --surface-border: #2e2e46;
     --accent: #8b7bff;
     --accent-2: #c4b5fd;
     --accent-contrast: #09090f;
@@ -41,12 +41,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-  background-image:
-    radial-gradient(1100px 650px at 8% -10%, color-mix(in srgb, var(--accent) 13%, transparent), transparent),
-    radial-gradient(900px 550px at 100% 0%, color-mix(in srgb, var(--accent-2) 15%, transparent), transparent),
-    radial-gradient(800px 500px at 50% 100%, color-mix(in srgb, var(--accent) 8%, transparent), transparent);
-  background-repeat: no-repeat;
-  background-attachment: fixed;
 }
 
 ::selection {
@@ -94,6 +88,50 @@ body {
 
 .animate-float-slow {
   animation: float-slow 9s ease-in-out infinite;
+}
+
+/* Ambient background blobs: slow, large, looping drift + scale so the
+   page reads as alive without being distracting. Each blob gets a
+   different path/duration so they never sync up. */
+@keyframes drift-a {
+  0%   { transform: translate(0, 0) scale(1); }
+  25%  { transform: translate(6vw, 8vh) scale(1.12); }
+  50%  { transform: translate(-4vw, 14vh) scale(0.95); }
+  75%  { transform: translate(-8vw, 2vh) scale(1.05); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes drift-b {
+  0%   { transform: translate(0, 0) scale(1); }
+  30%  { transform: translate(-10vw, 6vh) scale(1.1); }
+  60%  { transform: translate(-3vw, -10vh) scale(0.92); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes drift-c {
+  0%   { transform: translate(0, 0) scale(1); }
+  40%  { transform: translate(8vw, -6vh) scale(1.08); }
+  70%  { transform: translate(2vw, 10vh) scale(0.96); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.animate-drift-a {
+  animation: drift-a 34s ease-in-out infinite;
+}
+.animate-drift-b {
+  animation: drift-b 42s ease-in-out infinite;
+}
+.animate-drift-c {
+  animation: drift-c 38s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-drift-a,
+  .animate-drift-b,
+  .animate-drift-c,
+  .animate-float-slow {
+    animation: none;
+  }
 }
 
 @keyframes shimmer {

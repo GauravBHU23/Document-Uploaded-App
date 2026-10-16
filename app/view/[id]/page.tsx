@@ -68,14 +68,6 @@ export default function PersonViewPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="relative flex flex-1 items-center justify-center overflow-hidden px-4 py-10">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="animate-float-slow absolute -left-24 -top-24 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl dark:bg-indigo-500/20" />
-        <div
-          className="animate-float-slow absolute -bottom-32 right-[-6rem] h-96 w-96 rounded-full bg-violet-400/20 blur-3xl dark:bg-violet-500/20"
-          style={{ animationDelay: "2.5s" }}
-        />
-      </div>
-
       <div className="relative z-10 w-full max-w-md">
         {nameError && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
