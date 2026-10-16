@@ -1,7 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login"];
+// /view/[personId] is the PIN-protected self-access page for a single
+// person. It is intentionally public at the routing layer -- unlike
+// every other page, it is not meant to require an admin session.
+// Its actual security comes entirely from the PIN check performed by
+// the pin-access Edge Function on every request, not from this route
+// being reachable. See supabase/functions/pin-access and
+// supabase/migrations/0002_person_pin_access.sql.
+const PUBLIC_PATHS = ["/login", "/view"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(

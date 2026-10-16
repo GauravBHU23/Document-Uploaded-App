@@ -92,3 +92,36 @@ export function useDeletePerson() {
     },
   });
 }
+
+export function useSetPersonPin() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ personId, pin }: { personId: string; pin: string }) => {
+      const supabase = createClient();
+      const { error } = await supabase.rpc("set_person_pin", {
+        p_person_id: personId,
+        p_pin: pin,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["people", "detail", variables.personId] });
+    },
+  });
+}
+
+export function useClearPersonPin() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (personId: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.rpc("clear_person_pin", { p_person_id: personId });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_data, personId) => {
+      queryClient.invalidateQueries({ queryKey: ["people", "detail", personId] });
+    },
+  });
+}

@@ -9,6 +9,7 @@ export type Person = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  access_pin_hash: string | null;
 };
 
 export type Document = {
