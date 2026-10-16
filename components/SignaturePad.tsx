@@ -108,7 +108,7 @@ export default function SignaturePad({
   return (
     <div
       ref={containerRef}
-      className="relative aspect-[3/2] w-full overflow-hidden rounded-2xl border-2 border-dashed border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900"
+      className="relative aspect-[3/2] w-full overflow-hidden rounded-2xl border-2 border-dashed border-zinc-300 bg-white dark:border-zinc-600"
     >
       {dprReady && (
         <canvas
@@ -120,8 +120,8 @@ export default function SignaturePad({
           className="absolute inset-0 touch-none"
         />
       )}
-      <div className="pointer-events-none absolute bottom-6 left-6 right-6 border-b border-dashed border-zinc-300 dark:border-zinc-700" />
-      <p className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-zinc-300 dark:text-zinc-700">
+      <div className="pointer-events-none absolute bottom-6 left-6 right-6 border-b border-dashed border-zinc-300" />
+      <p className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-zinc-400">
         Sign above the line
       </p>
     </div>
