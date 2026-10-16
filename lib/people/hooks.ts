@@ -125,3 +125,34 @@ export function useClearPersonPin() {
     },
   });
 }
+
+export function useCreateUploadToken() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (personId: string) => {
+      const supabase = createClient();
+      const { data, error } = await supabase.rpc("create_upload_token", { p_person_id: personId });
+      if (error) throw new Error(error.message);
+      return data as string;
+    },
+    onSuccess: (_data, personId) => {
+      queryClient.invalidateQueries({ queryKey: ["people", "detail", personId] });
+    },
+  });
+}
+
+export function useClearUploadToken() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (personId: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.rpc("clear_upload_token", { p_person_id: personId });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_data, personId) => {
+      queryClient.invalidateQueries({ queryKey: ["people", "detail", personId] });
+    },
+  });
+}

@@ -8,6 +8,7 @@ import AppHeader from "@/components/AppHeader";
 import UploadDropzone from "@/components/UploadDropzone";
 import DocumentCard from "@/components/DocumentCard";
 import PersonAccessCard from "@/components/PersonAccessCard";
+import PersonUploadLinkCard from "@/components/PersonUploadLinkCard";
 import QRCaptureTrigger from "@/components/QRCaptureTrigger";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { useAdmin } from "@/lib/auth/use-admin";
@@ -395,6 +396,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
               className="lg:sticky lg:top-20 lg:self-start"
             >
               <PersonAccessCard person={person} />
+              <PersonUploadLinkCard person={person} />
             </motion.div>
           </div>
         )}

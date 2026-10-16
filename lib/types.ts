@@ -10,6 +10,7 @@ export type Person = {
   created_at: string;
   updated_at: string;
   access_pin_hash: string | null;
+  upload_token: string | null;
 };
 
 export type Document = {

@@ -8,10 +8,14 @@ import { NextResponse, type NextRequest } from "next/server";
 // the pin-access Edge Function on every request, not from this route
 // being reachable. See supabase/functions/pin-access and
 // supabase/migrations/0002_person_pin_access.sql.
+// /u/[token] is the PIN-free, upload-only counterpart -- same
+// reasoning, except its security comes from the token itself being an
+// unguessable secret (see supabase/functions/upload-link and
+// supabase/migrations/0011_upload_only_link.sql) rather than a PIN.
 // /offline is the PWA offline fallback page (see public/sw.js). It
 // must be reachable without a session: it is shown precisely when the
 // service worker cannot reach the network to even check auth state.
-const PUBLIC_PATHS = ["/login", "/view", "/offline"];
+const PUBLIC_PATHS = ["/login", "/view", "/u", "/offline"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(
