@@ -20,6 +20,7 @@ const SOURCE_LABEL: Record<Document["source"], string> = {
   camera: "Captured",
   qr_mobile: "Via phone",
   tool_generated: "Generated",
+  self_upload: "By person",
 };
 
 type DocumentCardProps = {
@@ -115,6 +116,7 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
     camera: "bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400",
     qr_mobile: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400",
     tool_generated: "bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400",
+    self_upload: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400",
   };
 
   return (

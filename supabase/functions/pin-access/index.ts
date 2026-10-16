@@ -1,7 +1,7 @@
 // Supabase Edge Function: pin-access
 //
-// Lets a person view and download their own documents using a PIN,
-// with no login/signup. This function is the ONLY place that ever
+// Lets a person view, download, and upload their own documents using
+// a PIN, with no login/signup. This function is the ONLY place that ever
 // uses the service role key -- it lives here, in Supabase's secure
 // Edge Function environment (provided automatically as
 // SUPABASE_SERVICE_ROLE_KEY), and is never present in the Next.js app
@@ -20,6 +20,16 @@
 // the PIN is wrong) rather than raising an exception -- raising would
 // roll back the attempt-counter row that verify_person_pin just
 // inserted in the same call, silently defeating the rate limit.
+//
+// The "upload" action (added in 0010_pin_self_upload.sql) lets the
+// PIN holder add their own documents. It writes to the same storage
+// path shape as the admin's normal upload (admin_id/person_id/...),
+// so these files appear in the admin's view exactly like any other
+// document -- just tagged source='self_upload'. The row is written
+// via insert_document_for_pin, which independently re-verifies the
+// PIN and looks up admin_id itself (never trusts a client-supplied
+// admin_id), so a PIN only ever grants write access into the one
+// person's folder it belongs to.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -50,11 +60,21 @@ type PinRow = {
 };
 
 type RequestBody = {
-  action: "list" | "download" | "person_name";
+  action: "list" | "download" | "person_name" | "upload";
   personId: string;
   pin?: string;
   documentId?: string;
+  label?: string;
+  fileName?: string;
+  mimeType?: string;
+  fileBase64?: string;
 };
+
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+function sanitizeFilename(name: string) {
+  return name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+}
 
 async function listForPin(
   admin: ReturnType<typeof createClient>,
@@ -89,7 +109,7 @@ Deno.serve(async (req) => {
     return json({ error: "Invalid request body" }, 400);
   }
 
-  const { action, personId, pin, documentId } = body;
+  const { action, personId, pin, documentId, label, fileName, mimeType, fileBase64 } = body;
 
   if (!personId || typeof personId !== "string") {
     return json({ error: "personId is required" }, 400);
@@ -150,6 +170,77 @@ Deno.serve(async (req) => {
     }
 
     return json({ url: signed.signedUrl });
+  }
+
+  if (action === "upload") {
+    if (!label || typeof label !== "string") {
+      return json({ error: "label is required" }, 400);
+    }
+    if (!fileName || !mimeType || !fileBase64) {
+      return json({ error: "fileName, mimeType and fileBase64 are required" }, 400);
+    }
+
+    // Re-verify the PIN directly (rather than via listForPin) so a
+    // person with zero existing documents can still upload their
+    // first one -- listForPin's valid/rows shape is about reading
+    // documents that already exist, not about authorizing a write.
+    const { data: pinOk, error: pinError } = await admin.rpc("verify_person_pin", {
+      p_person_id: personId,
+      p_pin: pin,
+    });
+
+    if (pinError || !pinOk) {
+      return json({ error: "Invalid PIN or too many attempts" }, 401);
+    }
+
+    const { data: adminIdRow, error: adminIdError } = await admin
+      .from("people")
+      .select("admin_id")
+      .eq("id", personId)
+      .single();
+
+    if (adminIdError || !adminIdRow) {
+      return json({ error: "Person not found" }, 404);
+    }
+
+    let bytes: Uint8Array;
+    try {
+      bytes = Uint8Array.from(atob(fileBase64), (c) => c.charCodeAt(0));
+    } catch {
+      return json({ error: "Invalid file data" }, 400);
+    }
+
+    if (bytes.byteLength === 0 || bytes.byteLength > MAX_UPLOAD_BYTES) {
+      return json({ error: "File is empty or too large (max 25MB)" }, 400);
+    }
+
+    const documentId = crypto.randomUUID();
+    const storagePath = `${adminIdRow.admin_id}/${personId}/${documentId}-${sanitizeFilename(fileName)}`;
+
+    const { error: uploadError } = await admin.storage
+      .from("documents")
+      .upload(storagePath, bytes, { contentType: mimeType, upsert: false });
+
+    if (uploadError) {
+      return json({ error: `Upload failed: ${uploadError.message}` }, 500);
+    }
+
+    const { error: insertError } = await admin.rpc("insert_document_for_pin", {
+      p_person_id: personId,
+      p_pin: pin,
+      p_document_id: documentId,
+      p_label: label,
+      p_storage_path: storagePath,
+      p_mime_type: mimeType,
+      p_size_bytes: bytes.byteLength,
+    });
+
+    if (insertError) {
+      await admin.storage.from("documents").remove([storagePath]);
+      return json({ error: `Could not save document record: ${insertError.message}` }, 500);
+    }
+
+    return json({ id: documentId });
   }
 
   return json({ error: "Unknown action" }, 400);

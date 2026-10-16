@@ -29,6 +29,7 @@ const SOURCE_FILTERS: { label: string; value: DocumentSource | "all" }[] = [
   { label: "Captured", value: "camera" },
   { label: "Via phone", value: "qr_mobile" },
   { label: "Generated", value: "tool_generated" },
+  { label: "By person", value: "self_upload" },
 ];
 
 export default function PersonPage({ params }: { params: Promise<{ id: string }> }) {

@@ -1,13 +1,16 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   getPersonName,
   listDocumentsForPin,
   getDownloadUrl,
+  uploadDocumentForPin,
 } from "@/lib/pin-access/api";
+
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
 type PinDocument = {
   id: string;
@@ -33,6 +36,8 @@ export default function PersonViewPage({ params }: { params: Promise<{ id: strin
   const [error, setError] = useState<string | null>(null);
   const [documents, setDocuments] = useState<PinDocument[] | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     getPersonName(personId)
@@ -63,6 +68,29 @@ export default function PersonViewPage({ params }: { params: Promise<{ id: strin
       toast.error(err instanceof Error ? err.message : "Could not open file");
     } finally {
       setDownloadingId(null);
+    }
+  }
+
+  async function handleFileSelected(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error("File is too large (max 25MB)");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      await uploadDocumentForPin(personId, pin, file, file.name);
+      const docs = await listDocumentsForPin(personId, pin);
+      setDocuments(docs);
+      toast.success("Document uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -137,8 +165,46 @@ export default function PersonViewPage({ params }: { params: Promise<{ id: strin
               {personName}&apos;s Documents
             </h1>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              View and download only — {documents.length} document{documents.length === 1 ? "" : "s"}
+              View, download, and add your own — {documents.length} document{documents.length === 1 ? "" : "s"}
             </p>
+
+            <div className="mt-5 glass-surface rounded-2xl border border-dashed border-zinc-300/80 p-4 dark:border-zinc-700/80">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,application/pdf"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileSelected}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-white dark:text-zinc-900"
+              >
+                {uploading ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                      <path d="M11.47 2.47a.75.75 0 011.06 0l4.5 4.5a.75.75 0 01-1.06 1.06l-3.22-3.22V16.5a.75.75 0 01-1.5 0V4.81L8.03 8.03a.75.75 0 01-1.06-1.06l4.5-4.5z" />
+                      <path d="M3 15.75a.75.75 0 01.75.75v2.25a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5V16.5a.75.75 0 011.5 0v2.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V16.5a.75.75 0 01.75-.75z" />
+                    </svg>
+                    Upload a document
+                  </>
+                )}
+              </button>
+              <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                Take a photo or choose a file from your device
+              </p>
+            </div>
 
             {documents.length === 0 ? (
               <p className="mt-8 text-center text-sm text-zinc-500 dark:text-zinc-400">

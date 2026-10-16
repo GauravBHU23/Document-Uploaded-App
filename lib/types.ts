@@ -1,4 +1,4 @@
-export type DocumentSource = "upload" | "camera" | "qr_mobile" | "tool_generated";
+export type DocumentSource = "upload" | "camera" | "qr_mobile" | "tool_generated" | "self_upload";
 
 export type Person = {
   id: string;
