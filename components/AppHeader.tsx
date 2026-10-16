@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import ThemeToggle from "@/components/ThemeToggle";
+import IdleWarningModal from "@/components/IdleWarningModal";
+import SessionBadge from "@/components/SessionBadge";
+import { useIdleLogout } from "@/lib/session/use-idle-logout";
 
 type AppHeaderProps = {
   title: string;
@@ -14,6 +17,7 @@ type AppHeaderProps = {
 
 export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps) {
   const router = useRouter();
+  const { secondsLeft, staySignedIn, idleTimeoutMs } = useIdleLogout();
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -23,6 +27,8 @@ export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps)
   }
 
   return (
+    <>
+    <IdleWarningModal secondsLeft={secondsLeft} onStaySignedIn={staySignedIn} />
     <motion.header
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -65,6 +71,7 @@ export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps)
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <SessionBadge idleTimeoutMs={idleTimeoutMs} />
           <ThemeToggle />
           <motion.button
             whileHover={{ scale: 1.03 }}
@@ -90,5 +97,6 @@ export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps)
         </div>
       </div>
     </motion.header>
+    </>
   );
 }

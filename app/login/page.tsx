@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { use, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
@@ -11,8 +11,19 @@ const FEATURES = [
   { title: "Built-in document tools", desc: "Merge PDFs, resize images, sign — no other site needed." },
 ];
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{ reason?: string; redirect?: string }>;
+};
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
   const router = useRouter();
+  // use() reads the searchParams promise Next.js passes to every page
+  // (server or client). This resolves identically during SSR and on
+  // the client, so the banner's presence never mismatches between the
+  // two -- unlike reading window.location in an effect post-mount.
+  const resolvedSearchParams = use(searchParams);
+  const idleNotice = resolvedSearchParams.reason === "idle";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,8 +48,7 @@ export default function LoginPage() {
       return;
     }
 
-    const params = new URLSearchParams(window.location.search);
-    router.push(params.get("redirect") || "/dashboard");
+    router.push(resolvedSearchParams.redirect || "/dashboard");
     router.refresh();
   }
 
@@ -126,6 +136,23 @@ export default function LoginPage() {
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
               Sign in to your admin workspace.
             </p>
+
+            {idleNotice && (
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="mt-0.5 h-4 w-4 shrink-0">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.94 6.94a.75.75 0 11-1.06-1.06l.396-.396A2.503 2.503 0 0110 5a2.5 2.5 0 011.5 4.5c-.413.33-.75.746-.75 1.25a.75.75 0 01-1.5 0c0-1.042.676-1.676 1.154-2.055A1 1 0 0010 6.5a1.004 1.004 0 00-.734.317l-.326.123zM10 15a1 1 0 100-2 1 1 0 000 2z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                You were signed out after 10 minutes of inactivity, to keep this account secure.
+              </motion.p>
+            )}
 
             <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
               <div>
