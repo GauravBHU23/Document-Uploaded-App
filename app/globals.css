@@ -42,8 +42,9 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   background-image:
-    radial-gradient(900px 500px at 10% -10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent),
-    radial-gradient(700px 400px at 100% 0%, color-mix(in srgb, var(--accent-2) 14%, transparent), transparent);
+    radial-gradient(1100px 650px at 8% -10%, color-mix(in srgb, var(--accent) 13%, transparent), transparent),
+    radial-gradient(900px 550px at 100% 0%, color-mix(in srgb, var(--accent-2) 15%, transparent), transparent),
+    radial-gradient(800px 500px at 50% 100%, color-mix(in srgb, var(--accent) 8%, transparent), transparent);
   background-repeat: no-repeat;
   background-attachment: fixed;
 }

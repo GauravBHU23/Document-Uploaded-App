@@ -53,7 +53,8 @@ export default function LoginPage() {
         />
       </div>
 
-      <div className="relative z-10 grid flex-1 grid-cols-1 lg:grid-cols-2">
+      <div className="relative z-10 flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-10">
+      <div className="glass-surface grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-3xl border border-zinc-200/70 shadow-2xl shadow-indigo-950/10 lg:grid-cols-2 dark:border-zinc-800/70">
         {/* Left: brand / feature panel (desktop only) */}
         <motion.div
           initial={{ opacity: 0, x: -24 }}
@@ -107,12 +108,12 @@ export default function LoginPage() {
         </motion.div>
 
         {/* Right: login form */}
-        <div className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
+        <div className="flex items-center justify-center bg-white/60 px-6 py-12 sm:px-10 dark:bg-zinc-950/40">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
-            className="glass-surface w-full max-w-sm rounded-2xl border border-zinc-200/70 p-8 shadow-xl shadow-indigo-950/5 dark:border-zinc-800/70"
+            className="w-full max-w-sm"
           >
             <div className="mb-2 flex items-center gap-2.5 lg:hidden">
               <div className="accent-gradient flex h-9 w-9 items-center justify-center rounded-xl text-white">
@@ -221,6 +222,7 @@ export default function LoginPage() {
             </p>
           </motion.div>
         </div>
+      </div>
       </div>
     </div>
   );

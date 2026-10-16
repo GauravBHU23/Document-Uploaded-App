@@ -32,7 +32,8 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
         backHref="/dashboard"
       />
 
-      <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
+      <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 2xl:px-16">
+        <div className="mx-auto w-full max-w-7xl">
         {personError && (
           <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
             Could not load this person. They may not exist, or you may not have access.
@@ -44,7 +45,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
         )}
 
         {person && admin && (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
             <div className="min-w-0">
               {/* Person summary strip */}
               <motion.div
@@ -97,7 +98,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
               </div>
 
               {documentsLoading && (
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                   {[...Array(4)].map((_, i) => (
                     <div
                       key={i}
@@ -126,7 +127,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
               )}
 
               {documents && documents.length > 0 && (
-                <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                   <AnimatePresence initial={false}>
                     {documents.map((document) => (
                       <DocumentCard key={document.id} document={document} />
@@ -147,6 +148,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
             </motion.div>
           </div>
         )}
+        </div>
       </main>
     </div>
   );
