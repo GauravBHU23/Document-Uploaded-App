@@ -7,6 +7,7 @@ import AppHeader from "@/components/AppHeader";
 import UploadDropzone from "@/components/UploadDropzone";
 import DocumentCard from "@/components/DocumentCard";
 import PersonAccessCard from "@/components/PersonAccessCard";
+import QRCaptureTrigger from "@/components/QRCaptureTrigger";
 import { useAdmin } from "@/lib/auth/use-admin";
 import { usePerson } from "@/lib/people/hooks";
 import { useDocuments } from "@/lib/documents/hooks";
@@ -103,6 +104,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
                     </svg>
                     Capture Photo
                   </Link>
+                  <QRCaptureTrigger adminId={admin.id} personId={person.id} />
                 </div>
                 <UploadDropzone adminId={admin.id} personId={person.id} />
                 <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
