@@ -43,3 +43,34 @@ export function useRealtimeDocuments(personId: string) {
     };
   }, [personId, queryClient]);
 }
+
+/**
+ * Same mechanism as useRealtimeDocuments, but for Trash -- a single
+ * app-wide bin across every person, so it can't filter by person_id
+ * the way the per-person hook does. Subscribes to every documents
+ * change and invalidates the trash query key; RLS still applies to
+ * the realtime feed itself, so this session only ever receives events
+ * for rows it could already SELECT (its own admin's documents), same
+ * as useRealtimeDocuments.
+ */
+export function useRealtimeTrash() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("documents-trash")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "documents" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["documents", "trash"] });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+}

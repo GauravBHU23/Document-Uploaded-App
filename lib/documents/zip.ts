@@ -22,29 +22,49 @@ function uniqueZipName(label: string, mimeType: string, seen: Map<string, number
   return `${name} (${count + 1})${ext}`;
 }
 
+export type ZipDownloadResult = {
+  succeeded: number;
+  failed: string[];
+};
+
 /** Downloads every given document and bundles them into a single .zip
  * file, instead of triggering N separate browser downloads. Fetches
  * sequentially (not in parallel) to stay gentle on the 60-second
  * signed URLs and avoid hammering Storage with a burst of requests
- * for someone with many documents. */
+ * for someone with many documents.
+ *
+ * A single document failing (expired signed URL, transient network
+ * blip) no longer aborts the whole batch -- it's skipped and reported
+ * back in `failed`, so someone downloading 20 documents still gets 19
+ * of them instead of none. Throws only if EVERY document fails (zero
+ * files would otherwise produce a valid-looking but empty zip). */
 export async function downloadDocumentsAsZip(
   supabase: SupabaseClient,
   documents: Document[],
   zipFilename: string,
   onProgress?: (done: number, total: number) => void,
-) {
+): Promise<ZipDownloadResult> {
   const zip = new JSZip();
   const seenNames = new Map<string, number>();
+  const failed: string[] = [];
 
   for (let i = 0; i < documents.length; i++) {
     const doc = documents[i];
-    const url = await getSignedUrl(supabase, doc.storage_path, 60);
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Could not download "${doc.label}"`);
-    const blob = await response.blob();
-    const name = uniqueZipName(doc.label, doc.mime_type, seenNames);
-    zip.file(name, blob);
+    try {
+      const url = await getSignedUrl(supabase, doc.storage_path, 60);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      const name = uniqueZipName(doc.label, doc.mime_type, seenNames);
+      zip.file(name, blob);
+    } catch {
+      failed.push(doc.label);
+    }
     onProgress?.(i + 1, documents.length);
+  }
+
+  if (failed.length === documents.length) {
+    throw new Error("Could not download any of the selected files");
   }
 
   const zipBlob = await zip.generateAsync({ type: "blob" });
@@ -54,4 +74,6 @@ export async function downloadDocumentsAsZip(
   a.download = zipFilename.endsWith(".zip") ? zipFilename : `${zipFilename}.zip`;
   a.click();
   URL.revokeObjectURL(blobUrl);
+
+  return { succeeded: documents.length - failed.length, failed };
 }

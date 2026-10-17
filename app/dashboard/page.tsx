@@ -9,8 +9,15 @@ import InstallPrompt from "@/components/InstallPrompt";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { useAdmin } from "@/lib/auth/use-admin";
 import { usePeople, useCreatePerson, useUpdatePerson, useDeletePerson } from "@/lib/people/hooks";
+import { useSearchDocuments } from "@/lib/documents/hooks";
 import type { Person } from "@/lib/types";
 import NewPersonDialog from "./new-person-dialog";
+
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 const AVATAR_PALETTE = [
   "from-indigo-400 to-violet-500",
@@ -39,6 +46,7 @@ export default function DashboardPage() {
 
   const { data: admin, isLoading: adminLoading, isError: adminError } = useAdmin();
   const { data: people, isLoading: peopleLoading, isError: peopleError } = usePeople(search);
+  const { data: matchedDocuments, isLoading: documentsSearchLoading } = useSearchDocuments(search);
   const createPerson = useCreatePerson();
   const updatePerson = useUpdatePerson();
   const deletePerson = useDeletePerson();
@@ -228,6 +236,37 @@ export default function DashboardPage() {
               </motion.button>
             </div>
           </div>
+
+          {search.trim().length >= 2 && !documentsSearchLoading && matchedDocuments && matchedDocuments.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 rounded-2xl border border-indigo-200/80 bg-indigo-50/50 p-4 dark:border-indigo-900/60 dark:bg-indigo-950/20"
+            >
+              <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                {matchedDocuments.length} document{matchedDocuments.length === 1 ? "" : "s"} matching &quot;{search.trim()}&quot;
+              </p>
+              <ul className="mt-2 flex flex-col gap-1.5">
+                {matchedDocuments.map((doc) => (
+                  <Link
+                    key={doc.id}
+                    href={`/people/${doc.person_id}`}
+                    className="flex items-center gap-3 rounded-xl bg-white/80 px-3 py-2 text-sm shadow-sm transition-colors hover:bg-white dark:bg-zinc-950/60 dark:hover:bg-zinc-900"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0 text-indigo-400">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                    </svg>
+                    <span className="min-w-0 flex-1 truncate font-medium text-zinc-900 dark:text-zinc-50">
+                      {doc.label}
+                    </span>
+                    <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
+                      {doc.people?.full_name ?? "Unknown"} · {formatSize(doc.size_bytes)}
+                    </span>
+                  </Link>
+                ))}
+              </ul>
+            </motion.div>
+          )}
 
           {peopleLoading && (
             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

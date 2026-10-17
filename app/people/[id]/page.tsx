@@ -110,8 +110,12 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
     setBulkDownloading(true);
     try {
       const supabase = createClient();
-      await downloadDocumentsAsZip(supabase, selectedDocuments, `${person.full_name}-documents`);
-      toast.success(`Downloaded ${selectedDocuments.length} document${selectedDocuments.length === 1 ? "" : "s"} as a zip`);
+      const result = await downloadDocumentsAsZip(supabase, selectedDocuments, `${person.full_name}-documents`);
+      if (result.failed.length > 0) {
+        toast.warning(`Downloaded ${result.succeeded} of ${selectedDocuments.length} — couldn't fetch: ${result.failed.join(", ")}`);
+      } else {
+        toast.success(`Downloaded ${result.succeeded} document${result.succeeded === 1 ? "" : "s"} as a zip`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not download all files");
     } finally {
@@ -124,8 +128,12 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
     setBulkDownloading(true);
     try {
       const supabase = createClient();
-      await downloadDocumentsAsZip(supabase, documents, `${person.full_name}-documents`);
-      toast.success(`Downloaded all ${documents.length} documents as a zip`);
+      const result = await downloadDocumentsAsZip(supabase, documents, `${person.full_name}-documents`);
+      if (result.failed.length > 0) {
+        toast.warning(`Downloaded ${result.succeeded} of ${documents.length} — couldn't fetch: ${result.failed.join(", ")}`);
+      } else {
+        toast.success(`Downloaded all ${result.succeeded} documents as a zip`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not download all files");
     } finally {

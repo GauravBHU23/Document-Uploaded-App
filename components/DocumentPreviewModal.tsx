@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { useModalBehavior } from "@/lib/ui/use-modal-behavior";
 
 type DocumentPreviewModalProps = {
   open: boolean;
@@ -19,6 +20,8 @@ export default function DocumentPreviewModal({
   mimeType,
   onDownload,
 }: DocumentPreviewModalProps) {
+  useModalBehavior(open, onClose);
+
   const isImage = mimeType.startsWith("image/");
   const isPdf = mimeType === "application/pdf";
 
@@ -29,6 +32,9 @@ export default function DocumentPreviewModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={label}
           className="fixed inset-0 z-[100] flex flex-col bg-black/80 backdrop-blur-sm"
           onClick={onClose}
         >

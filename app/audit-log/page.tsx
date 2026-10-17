@@ -80,16 +80,28 @@ function timeAgo(iso: string) {
   return new Date(iso).toLocaleDateString();
 }
 
+const PERSON_FIELD_LABEL: Record<string, string> = {
+  full_name: "name",
+  category: "category",
+  date_of_birth: "date of birth",
+  notes: "notes",
+};
+
 function describeEntry(entry: AuditLogEntry): string {
   const meta = ACTION_META[entry.action];
   if (entry.action === "document_renamed" && entry.metadata) {
     return `renamed "${entry.metadata.from}" to "${entry.metadata.to}"`;
   }
-  if (entry.action === "person_updated" && entry.metadata?.from_name && entry.metadata?.to_name) {
-    if (entry.metadata.from_name !== entry.metadata.to_name) {
-      return `renamed "${entry.metadata.from_name}" to "${entry.metadata.to_name}"`;
+  if (entry.action === "person_updated" && entry.metadata) {
+    const changedFields = Object.keys(entry.metadata);
+
+    if (changedFields.length === 1 && changedFields[0] === "full_name") {
+      const change = entry.metadata.full_name as { from: string; to: string };
+      return `renamed "${change.from}" to "${change.to}"`;
     }
-    return `updated "${entry.metadata.to_name}"`;
+
+    const fieldLabels = changedFields.map((field) => PERSON_FIELD_LABEL[field] ?? field);
+    return `updated ${fieldLabels.join(", ")} for "${entry.entity_label}"`;
   }
   if (entry.entity_type === "document") {
     const who = entry.person_label ? ` (${entry.person_label})` : "";

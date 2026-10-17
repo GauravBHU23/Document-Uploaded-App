@@ -16,6 +16,7 @@ import {
   useBulkRestoreDocuments,
   useBulkPermanentlyDeleteDocuments,
 } from "@/lib/documents/hooks";
+import { useRealtimeTrash } from "@/lib/documents/use-realtime-documents";
 import { TRASH_RETENTION_DAYS } from "@/lib/documents/trash";
 import type { Document } from "@/lib/types";
 
@@ -220,6 +221,7 @@ function TrashRow({
 
 export default function TrashPage() {
   const { data: documents, isLoading } = useTrashedDocuments();
+  useRealtimeTrash();
   const [search, setSearch] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -284,8 +286,14 @@ export default function TrashPage() {
     });
     if (!confirmed) return;
     try {
-      await bulkPermanentlyDelete.mutateAsync(selectedDocuments);
-      toast.success("Permanently deleted");
+      const result = await bulkPermanentlyDelete.mutateAsync(selectedDocuments);
+      if (result.failed.length > 0) {
+        toast.warning(
+          `Deleted ${result.succeeded.length} of ${selectedDocuments.length} — failed: ${result.failed.map((f) => f.document.label).join(", ")}`,
+        );
+      } else {
+        toast.success("Permanently deleted");
+      }
       exitSelectMode();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not delete");

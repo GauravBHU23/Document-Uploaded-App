@@ -30,6 +30,32 @@ export function useDocuments(personId: string) {
   });
 }
 
+/** Searches this admin's documents by label across EVERY person, not
+ * just one folder -- the per-person search on the person page can
+ * only find a document once you already know whose folder it's in.
+ * Capped to 20 results since this is a "jump to it" lookup, not a
+ * paginated browse. Deleted (trashed) documents are excluded -- Trash
+ * has its own search for that. */
+export function useSearchDocuments(query: string) {
+  return useQuery({
+    queryKey: ["documents", "search", query],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("documents")
+        .select("*, people(full_name)")
+        .ilike("label", `%${query.trim()}%`)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw new Error(error.message);
+      return data as (Document & { people: { full_name: string } | null })[];
+    },
+    enabled: query.trim().length >= 2,
+  });
+}
+
 /** All of this admin's trashed documents, across every person --
  * Trash is a single app-wide bin, not scoped per person, so a
  * document deleted from any folder shows up in one place. */
@@ -191,24 +217,44 @@ export function useBulkRestoreDocuments() {
   });
 }
 
+export type BulkPermanentDeleteResult = {
+  succeeded: Document[];
+  failed: { document: Document; error: string }[];
+};
+
 /** Permanently deletes every given trashed document right now
  * (storage files + database rows), bypassing the 30-day wait.
  * Irreversible. Runs sequentially rather than in one batched call,
- * since each file also needs its own Storage removal. */
+ * since each file also needs its own Storage removal.
+ *
+ * One document failing (e.g. its storage object is already gone)
+ * no longer aborts the rest of the batch -- it's recorded in `failed`
+ * and the remaining documents are still processed, instead of leaving
+ * an unpredictable half-finished batch with no visibility into which
+ * documents were actually removed. */
 export function useBulkPermanentlyDeleteDocuments() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (documents: Document[]) => {
+    mutationFn: async (documents: Document[]): Promise<BulkPermanentDeleteResult> => {
       const supabase = createClient();
+      const succeeded: Document[] = [];
+      const failed: { document: Document; error: string }[] = [];
+
       for (const document of documents) {
-        await permanentlyDeleteFromTrash(supabase, document);
+        try {
+          await permanentlyDeleteFromTrash(supabase, document);
+          succeeded.push(document);
+        } catch (err) {
+          failed.push({ document, error: err instanceof Error ? err.message : "Unknown error" });
+        }
       }
-      return documents;
+
+      return { succeeded, failed };
     },
-    onSuccess: (documents) => {
+    onSuccess: ({ succeeded }) => {
       queryClient.invalidateQueries({ queryKey: ["documents", "trash"] });
-      const personIds = new Set(documents.map((d) => d.person_id));
+      const personIds = new Set(succeeded.map((d) => d.person_id));
       personIds.forEach((personId) => {
         queryClient.invalidateQueries({ queryKey: ["documents", personId] });
       });

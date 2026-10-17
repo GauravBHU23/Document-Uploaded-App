@@ -22,7 +22,7 @@ export type AuditLogEntry = {
   entity_label: string | null;
   person_id: string | null;
   person_label: string | null;
-  metadata: Record<string, string> | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 };
 

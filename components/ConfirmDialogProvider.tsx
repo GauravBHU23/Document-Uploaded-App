@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useModalBehavior } from "@/lib/ui/use-modal-behavior";
 
 type ConfirmOptions = {
   title: string;
@@ -38,6 +39,8 @@ export default function ConfirmDialogProvider({ children }: { children: React.Re
     setOptions(null);
   }
 
+  useModalBehavior(Boolean(options), () => handleClose(false));
+
   return (
     <ConfirmContext.Provider value={confirm}>
       {children}
@@ -47,6 +50,9 @@ export default function ConfirmDialogProvider({ children }: { children: React.Re
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={options.title}
             className="fixed inset-0 z-[110] flex items-end justify-center bg-black/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
             onClick={() => handleClose(false)}
           >

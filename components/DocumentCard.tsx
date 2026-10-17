@@ -34,7 +34,7 @@ type DocumentCardProps = {
 export default function DocumentCard({ document, selectable, selected, onToggleSelect }: DocumentCardProps) {
   const [renaming, setRenaming] = useState(false);
   const [label, setLabel] = useState(document.label);
-  const [opening, setOpening] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -62,7 +62,7 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
   }
 
   async function handleDownload() {
-    setOpening(true);
+    setDownloading(true);
     try {
       const supabase = createClient();
       const url = await getSignedUrl(supabase, document.storage_path, 60);
@@ -77,7 +77,7 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not download file");
     } finally {
-      setOpening(false);
+      setDownloading(false);
     }
   }
 
@@ -154,10 +154,10 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
       <button
         type="button"
         onClick={handleOpen}
-        disabled={opening}
+        disabled={previewOpen && !previewUrl}
         className="flex h-28 w-full items-center justify-center rounded-lg bg-gradient-to-br from-zinc-100 to-zinc-50 text-zinc-400 transition-colors group-hover:from-indigo-50 group-hover:to-violet-50 dark:from-zinc-900 dark:to-zinc-900/60 dark:group-hover:from-indigo-950/30 dark:group-hover:to-violet-950/20"
       >
-        {opening ? (
+        {previewOpen && !previewUrl ? (
           <svg className="h-7 w-7 animate-spin text-indigo-400" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -221,7 +221,7 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
           <button
             type="button"
             onClick={handleDownload}
-            disabled={opening}
+            disabled={downloading}
             className="absolute left-2 top-2 rounded bg-white/90 p-1 text-zinc-400 opacity-70 transition-opacity hover:bg-indigo-50 hover:text-indigo-600 hover:opacity-100 disabled:opacity-40 dark:bg-zinc-950/90 dark:hover:bg-indigo-950/40"
             aria-label={`Download ${document.label}`}
             title="Download"

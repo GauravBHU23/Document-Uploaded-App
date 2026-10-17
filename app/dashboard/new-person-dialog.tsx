@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useModalBehavior } from "@/lib/ui/use-modal-behavior";
 import type { Person } from "@/lib/types";
 
 type PersonFormValues = {
@@ -73,6 +74,8 @@ export default function NewPersonDialog({
     onClose();
   }
 
+  useModalBehavior(open, handleClose);
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!fullName.trim()) return;
@@ -92,6 +95,9 @@ export default function NewPersonDialog({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={isEdit ? "Edit Person" : "New Person"}
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
           onClick={handleClose}
         >
