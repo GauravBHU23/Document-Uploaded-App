@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 
 export function useAdmin() {
@@ -22,5 +22,22 @@ export function useAdmin() {
     },
     staleTime: 5 * 60_000,
     retry: false,
+  });
+}
+
+export function useUpdateDisplayName() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (displayName: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.rpc("update_my_display_name", {
+        p_display_name: displayName.trim() || null,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "me"] });
+    },
   });
 }
