@@ -11,6 +11,25 @@ import {
 } from "./trash";
 import type { Document, DocumentSource } from "@/lib/types";
 
+/** Total count of this admin's active (non-trashed) documents across
+ * every person -- used for the dashboard hero stat. A count-only
+ * query (head: true) so it never pulls actual rows, just the number. */
+export function useTotalDocumentCount() {
+  return useQuery({
+    queryKey: ["documents", "total-count"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { count, error } = await supabase
+        .from("documents")
+        .select("*", { count: "exact", head: true })
+        .is("deleted_at", null);
+
+      if (error) throw new Error(error.message);
+      return count ?? 0;
+    },
+  });
+}
+
 export function useDocuments(personId: string) {
   return useQuery({
     queryKey: ["documents", personId],

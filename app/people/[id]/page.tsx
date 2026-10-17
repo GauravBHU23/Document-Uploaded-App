@@ -187,10 +187,16 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="relative mb-5 overflow-hidden rounded-2xl bg-gradient-to-br from-[#4b32d6] via-[#6246ea] to-[#8b6ae8] p-5 text-white shadow-md shadow-indigo-900/20"
+                className="relative mb-5 overflow-hidden rounded-2xl bg-gradient-to-br from-[#4b32d6] via-[#6246ea] to-[#8b6ae8] p-5 text-white shadow-lg shadow-indigo-900/25"
               >
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgba(255,255,255,0.18),transparent_55%)]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                <motion.div
+                  aria-hidden
+                  className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-3xl"
+                  animate={{ scale: [1, 1.08, 1], opacity: [0.6, 0.9, 0.6] }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                />
                 <button
                   type="button"
                   onClick={() => setEditOpen(true)}
