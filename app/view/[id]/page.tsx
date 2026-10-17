@@ -122,9 +122,24 @@ export default function PersonViewPage({ params }: { params: Promise<{ id: strin
     <div className="relative flex flex-1 items-center justify-center overflow-hidden px-4 py-10">
       <div className="relative z-10 w-full max-w-md">
         {nameError && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
-            This link is invalid or no longer available.
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="glass-surface rounded-2xl border border-zinc-200/70 p-8 text-center shadow-xl dark:border-zinc-800/70"
+          >
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500 dark:bg-red-950/40 dark:text-red-400">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7">
+                <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h1 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              Link not available
+            </h1>
+            <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+              This link is invalid or no longer available. If this is a mistake, ask whoever shared it with you for a fresh link.
+            </p>
+          </motion.div>
         )}
 
         {!nameError && !documents && (

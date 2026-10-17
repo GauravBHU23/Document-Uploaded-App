@@ -155,18 +155,18 @@ export default function DashboardPage() {
                   Every person&apos;s documents, organized and ready — synced instantly across your devices.
                 </p>
               </div>
-              <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 }}
-                  className="flex flex-col items-start gap-1 rounded-2xl bg-white/15 px-3.5 py-3 backdrop-blur-sm ring-1 ring-white/10 sm:px-4"
+                  className="flex min-w-0 flex-col items-start gap-0.5 rounded-xl bg-white/15 px-2.5 py-2.5 backdrop-blur-sm ring-1 ring-white/10 sm:gap-1 sm:rounded-2xl sm:px-4 sm:py-3"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-white/80">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-white/80 sm:h-5 sm:w-5">
                     <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
                   </svg>
-                  <AnimatedNumber value={people?.length ?? 0} className="text-xl font-bold leading-none text-white tabular-nums sm:text-2xl" />
-                  <p className="text-[11px] font-medium text-white/70 sm:text-xs">
+                  <AnimatedNumber value={people?.length ?? 0} className="text-base font-bold leading-none text-white tabular-nums sm:text-2xl" />
+                  <p className="truncate text-[10px] font-medium text-white/70 sm:text-xs">
                     {people?.length === 1 ? "person" : "people"}
                   </p>
                 </motion.div>
@@ -174,14 +174,14 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.22 }}
-                  className="flex flex-col items-start gap-1 rounded-2xl bg-white/15 px-3.5 py-3 backdrop-blur-sm ring-1 ring-white/10 sm:px-4"
+                  className="flex min-w-0 flex-col items-start gap-0.5 rounded-xl bg-white/15 px-2.5 py-2.5 backdrop-blur-sm ring-1 ring-white/10 sm:gap-1 sm:rounded-2xl sm:px-4 sm:py-3"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-white/80">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-white/80 sm:h-5 sm:w-5">
                     <path fillRule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5h-7.5z" clipRule="evenodd" />
                     <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
                   </svg>
-                  <AnimatedNumber value={totalDocuments ?? 0} className="text-xl font-bold leading-none text-white tabular-nums sm:text-2xl" />
-                  <p className="text-[11px] font-medium text-white/70 sm:text-xs">
+                  <AnimatedNumber value={totalDocuments ?? 0} className="text-base font-bold leading-none text-white tabular-nums sm:text-2xl" />
+                  <p className="truncate text-[10px] font-medium text-white/70 sm:text-xs">
                     document{totalDocuments === 1 ? "" : "s"}
                   </p>
                 </motion.div>
@@ -189,13 +189,13 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.29 }}
-                  className="flex flex-col items-start gap-1 rounded-2xl bg-white/15 px-3.5 py-3 backdrop-blur-sm ring-1 ring-white/10 sm:px-4"
+                  className="flex min-w-0 flex-col items-start gap-0.5 rounded-xl bg-white/15 px-2.5 py-2.5 backdrop-blur-sm ring-1 ring-white/10 sm:gap-1 sm:rounded-2xl sm:px-4 sm:py-3"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-emerald-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-emerald-300 sm:h-5 sm:w-5">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
                   </svg>
-                  <p className="text-xl font-bold leading-none text-white sm:text-2xl">Secure</p>
-                  <p className="text-[11px] font-medium text-white/70 sm:text-xs">PIN-protected</p>
+                  <p className="truncate text-base font-bold leading-none text-white sm:text-2xl">Secure</p>
+                  <p className="truncate text-[10px] font-medium text-white/70 sm:text-xs">PIN-protected</p>
                 </motion.div>
               </div>
             </div>

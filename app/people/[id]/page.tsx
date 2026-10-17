@@ -223,7 +223,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
                   Edit
                 </button>
                 <div
-                  className="relative flex flex-wrap items-center gap-x-6 gap-y-2 text-sm"
+                  className="relative flex flex-wrap items-center gap-x-6 gap-y-2 pr-16 text-sm"
                   style={{ textShadow: "0 1px 10px rgba(0,0,0,0.15)" }}
                 >
                   <div>

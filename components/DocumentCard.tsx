@@ -222,7 +222,7 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
             type="button"
             onClick={handleDownload}
             disabled={downloading}
-            className="absolute left-2 top-2 rounded bg-white/90 p-1 text-zinc-400 opacity-70 transition-opacity hover:bg-indigo-50 hover:text-indigo-600 hover:opacity-100 disabled:opacity-40 dark:bg-zinc-950/90 dark:hover:bg-indigo-950/40"
+            className="absolute left-2 top-2 rounded-md bg-white/90 p-1.5 text-zinc-400 opacity-70 transition-opacity hover:bg-indigo-50 hover:text-indigo-600 hover:opacity-100 disabled:opacity-40 dark:bg-zinc-950/90 dark:hover:bg-indigo-950/40"
             aria-label={`Download ${document.label}`}
             title="Download"
           >
@@ -238,7 +238,12 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
           <button
             type="button"
             onClick={handleDelete}
-            className="absolute right-2 top-2 rounded bg-white/90 p-1 text-zinc-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 dark:bg-zinc-950/90 dark:hover:bg-red-950/40"
+            // Always visible (not hover-only) below sm: -- touchscreens
+            // have no :hover, so group-hover:opacity-100 alone left this
+            // permanently invisible on mobile, with no way to delete a
+            // document from its card (only via Select mode). Desktop
+            // keeps the subtler hover-reveal via sm:opacity-0.
+            className="absolute right-2 top-2 rounded-md bg-white/90 p-1.5 text-zinc-400 opacity-70 transition-opacity hover:bg-red-50 hover:text-red-600 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 dark:bg-zinc-950/90 dark:hover:bg-red-950/40"
             aria-label={`Delete ${document.label}`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
