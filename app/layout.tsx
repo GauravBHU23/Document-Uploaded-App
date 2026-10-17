@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import Providers from "./providers";
 import AmbientBackground from "@/components/AmbientBackground";
+import AppLaunchLoader from "@/components/AppLaunchLoader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -66,6 +67,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
         <AmbientBackground />
         <Providers>{children}</Providers>
+        <AppLaunchLoader />
       </body>
     </html>
   );

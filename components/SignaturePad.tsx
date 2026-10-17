@@ -28,22 +28,43 @@ export default function SignaturePad({
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    const rect = container.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    canvas.style.width = `${rect.width}px`;
-    canvas.style.height = `${rect.height}px`;
+    function sizeCanvas(width: number, height: number) {
+      if (!canvas || width === 0 || height === 0) return;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
 
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.scale(dpr, dpr);
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = "#16161d";
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.scale(dpr, dpr);
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "#16161d";
+      }
+      setDprReady(true);
     }
-    setDprReady(true);
+
+    // A plain getBoundingClientRect() right at mount can read 0x0 if
+    // the container's layout hasn't settled yet (e.g. it's inside an
+    // animating parent, or the tab/mode it belongs to just became
+    // visible) -- that silently leaves the canvas at 0x0 forever,
+    // since this effect only ran once. ResizeObserver re-fires
+    // whenever the container's real size becomes known/changes,
+    // so the canvas always ends up sized correctly regardless of
+    // when that happens, and keeps working if the container resizes
+    // later (e.g. orientation change, window resize).
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      sizeCanvas(width, height);
+    });
+    observer.observe(container);
+
+    return () => observer.disconnect();
   }, []);
 
   function getPoint(e: React.PointerEvent<HTMLCanvasElement>) {
