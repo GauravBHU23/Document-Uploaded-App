@@ -210,7 +210,7 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
           <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${SOURCE_BADGE_COLOR[document.source]}`}>
             {SOURCE_LABEL[document.source]}
           </span>
-          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
             {formatSize(document.size_bytes)}
           </span>
         </div>

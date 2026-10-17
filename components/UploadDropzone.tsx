@@ -100,7 +100,7 @@ export default function UploadDropzone({ adminId, personId }: UploadDropzoneProp
             <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               {dragActive ? "Drop to upload" : "Drag a file here, or tap to choose"}
             </p>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">Image or PDF</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Image or PDF</p>
           </motion.div>
         ) : (
           <motion.div

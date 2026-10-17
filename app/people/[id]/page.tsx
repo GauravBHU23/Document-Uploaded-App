@@ -16,6 +16,7 @@ import { usePerson, useUpdatePerson } from "@/lib/people/hooks";
 import { useDocuments, useBulkDeleteDocuments } from "@/lib/documents/hooks";
 import { useRealtimeDocuments } from "@/lib/documents/use-realtime-documents";
 import { downloadDocumentsAsZip } from "@/lib/documents/zip";
+import ZipDownloadProgressModal from "@/components/ZipDownloadProgressModal";
 import { createClient } from "@/lib/supabase/client";
 import type { DocumentSource } from "@/lib/types";
 import NewPersonDialog from "@/app/dashboard/new-person-dialog";
@@ -47,6 +48,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDownloading, setBulkDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState({ done: 0, total: 0 });
   const [editOpen, setEditOpen] = useState(false);
 
   const bulkDelete = useBulkDeleteDocuments();
@@ -108,9 +110,15 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
   async function handleBulkDownload() {
     if (selectedDocuments.length === 0 || !person) return;
     setBulkDownloading(true);
+    setDownloadProgress({ done: 0, total: selectedDocuments.length });
     try {
       const supabase = createClient();
-      const result = await downloadDocumentsAsZip(supabase, selectedDocuments, `${person.full_name}-documents`);
+      const result = await downloadDocumentsAsZip(
+        supabase,
+        selectedDocuments,
+        `${person.full_name}-documents`,
+        (done, total) => setDownloadProgress({ done, total }),
+      );
       if (result.failed.length > 0) {
         toast.warning(`Downloaded ${result.succeeded} of ${selectedDocuments.length} — couldn't fetch: ${result.failed.join(", ")}`);
       } else {
@@ -126,9 +134,15 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
   async function handleDownloadAll() {
     if (!documents || documents.length === 0 || !person) return;
     setBulkDownloading(true);
+    setDownloadProgress({ done: 0, total: documents.length });
     try {
       const supabase = createClient();
-      const result = await downloadDocumentsAsZip(supabase, documents, `${person.full_name}-documents`);
+      const result = await downloadDocumentsAsZip(
+        supabase,
+        documents,
+        `${person.full_name}-documents`,
+        (done, total) => setDownloadProgress({ done, total }),
+      );
       if (result.failed.length > 0) {
         toast.warning(`Downloaded ${result.succeeded} of ${documents.length} — couldn't fetch: ${result.failed.join(", ")}`);
       } else {
@@ -193,14 +207,14 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
                 <motion.div
                   aria-hidden
-                  className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-3xl"
+                  className="pointer-events-none absolute -right-12 -top-12 z-0 h-48 w-48 rounded-full bg-white/10 blur-3xl"
                   animate={{ scale: [1, 1.08, 1], opacity: [0.6, 0.9, 0.6] }}
                   transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <button
                   type="button"
                   onClick={() => setEditOpen(true)}
-                  className="absolute right-4 top-4 flex items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1.5 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/25"
+                  className="absolute right-4 top-4 z-10 flex items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1.5 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/25"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -256,7 +270,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
                   <QRCaptureTrigger adminId={admin.id} personId={person.id} />
                 </div>
                 <UploadDropzone adminId={admin.id} personId={person.id} />
-                <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
                   Need to merge PDFs or resize a photo first?{" "}
                   <Link href="/tools" className="font-medium text-indigo-500 hover:underline dark:text-indigo-400">
                     Open Tools
@@ -474,6 +488,12 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
           person={person}
         />
       )}
+
+      <ZipDownloadProgressModal
+        open={bulkDownloading}
+        done={downloadProgress.done}
+        total={downloadProgress.total}
+      />
     </div>
   );
 }

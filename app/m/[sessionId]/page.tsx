@@ -129,7 +129,7 @@ export default function MobileCapturePage({ params }: { params: Promise<{ sessio
                 </button>
               </div>
             </div>
-            <p className="mt-3 text-center text-xs text-zinc-400 dark:text-zinc-500">
+            <p className="mt-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
               It will appear on your other device instantly.
             </p>
           </motion.div>

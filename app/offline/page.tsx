@@ -84,7 +84,7 @@ export default function OfflinePage() {
                 securely online — they&apos;ll be here the moment you&apos;re back.
               </p>
 
-              <div className="relative mt-4 flex items-center justify-center gap-1.5 text-xs font-medium text-zinc-400 dark:text-zinc-500">
+              <div className="relative mt-4 flex items-center justify-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
                 <motion.span
                   aria-hidden
                   className="h-1.5 w-1.5 rounded-full bg-amber-400"

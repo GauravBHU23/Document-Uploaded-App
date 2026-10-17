@@ -106,7 +106,7 @@ export default function QRCaptureTrigger({ adminId, personId }: QRCaptureTrigger
               </div>
 
               {!expired && url && (
-                <p className="mt-3 text-xs text-zinc-400 dark:text-zinc-500">
+                <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
                   Expires in {minutes}:{String(seconds).padStart(2, "0")}
                 </p>
               )}

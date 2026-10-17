@@ -4,6 +4,7 @@ import { use, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { getPersonNameByToken, uploadDocumentByToken } from "@/lib/upload-link/api";
+import PublicPageChrome from "@/components/PublicPageChrome";
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 const MAX_FILES = 20;
@@ -104,6 +105,7 @@ export default function UploadLinkPage({ params }: { params: Promise<{ token: st
   const hasErrors = queue.some((item) => item.status === "error");
 
   return (
+    <PublicPageChrome>
     <div className="relative flex flex-1 items-center justify-center overflow-hidden px-4 py-10">
       <div className="relative z-10 w-full max-w-lg">
         {nameError && (
@@ -191,7 +193,7 @@ export default function UploadLinkPage({ params }: { params: Promise<{ token: st
                             placeholder="e.g. 10th Marksheet"
                             className="w-full truncate bg-transparent text-sm font-medium text-zinc-900 outline-none placeholder:text-zinc-400 disabled:opacity-70 dark:text-zinc-50"
                           />
-                          <p className="truncate text-xs text-zinc-400 dark:text-zinc-500">
+                          <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
                             {item.status === "error"
                               ? item.error
                               : item.status === "uploading"
@@ -271,5 +273,6 @@ export default function UploadLinkPage({ params }: { params: Promise<{ token: st
         )}
       </div>
     </div>
+    </PublicPageChrome>
   );
 }

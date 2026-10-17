@@ -108,7 +108,7 @@ export default function ResizeImagePage() {
                 </svg>
               </div>
               <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Choose an image</p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">JPG or PNG</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">JPG or PNG</p>
             </button>
           ) : (
             <div className="rounded-2xl border border-zinc-200/80 bg-white/70 p-4 dark:border-zinc-800/80 dark:bg-zinc-950/50">
@@ -125,7 +125,7 @@ export default function ResizeImagePage() {
                   <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
                     {sourceFile.name}
                   </p>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">{formatSize(sourceFile.size)}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{formatSize(sourceFile.size)}</p>
                   <button
                     type="button"
                     onClick={() => inputRef.current?.click()}
@@ -183,7 +183,7 @@ export default function ResizeImagePage() {
                       onChange={(e) => setCustomMaxDimension(Number(e.target.value) || 50)}
                       className="mt-1 w-full rounded-lg border border-zinc-300 bg-white/80 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-50"
                     />
-                    <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                       Limits the longer side; the photo keeps its shape, never stretched.
                     </p>
                   </div>

@@ -109,7 +109,7 @@ export default function MergePdfPage() {
               <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Add PDFs or images to merge
               </p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">Tap to choose files</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Tap to choose files</p>
             </button>
           ) : (
             <div className="rounded-2xl border border-zinc-200/80 bg-white/70 p-4 dark:border-zinc-800/80 dark:bg-zinc-950/50">
@@ -155,7 +155,7 @@ export default function MergePdfPage() {
                         <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
                           {item.file.name}
                         </p>
-                        <p className="text-xs text-zinc-400 dark:text-zinc-500">{formatSize(item.file.size)}</p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">{formatSize(item.file.size)}</p>
                       </div>
                       <button
                         type="button"

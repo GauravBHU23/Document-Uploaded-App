@@ -299,7 +299,7 @@ export default function DashboardPage() {
                     <span className="min-w-0 flex-1 truncate font-medium text-zinc-900 dark:text-zinc-50">
                       {doc.label}
                     </span>
-                    <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
+                    <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
                       {doc.people?.full_name ?? "Unknown"} · {formatSize(doc.size_bytes)}
                     </span>
                   </Link>

@@ -185,7 +185,7 @@ export default function AuditLogPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm text-zinc-700 dark:text-zinc-300">{describeEntry(entry)}</p>
-                          <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">{timeAgo(entry.created_at)}</p>
+                          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{timeAgo(entry.created_at)}</p>
                         </div>
                         <button
                           type="button"
