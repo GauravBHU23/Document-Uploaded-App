@@ -83,6 +83,15 @@ export default function PublicPageChrome({ children }: { children: React.ReactNo
             </p>
           </div>
         </div>
+
+        <div className="mx-auto mt-5 w-full max-w-7xl border-t border-zinc-200/70 pt-4 text-center dark:border-zinc-800/70">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Developed by <span className="font-medium text-zinc-700 dark:text-zinc-200">Gaurav Kumar</span>
+          </p>
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+            Department of Computer Science, IIT BHU Varanasi
+          </p>
+        </div>
       </footer>
     </div>
   );

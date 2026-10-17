@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { AnimatePresence, Reorder, motion } from "framer-motion";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
+import AppFooter from "@/components/AppFooter";
 import ToolHero from "@/components/ToolHero";
 import SaveToPersonPicker from "@/components/SaveToPersonPicker";
 import { mergeFilesToPdf } from "@/lib/pdf/mergePdfs";
@@ -224,6 +225,8 @@ export default function MergePdfPage() {
           )}
         </div>
       </main>
+
+      <AppFooter />
     </div>
   );
 }

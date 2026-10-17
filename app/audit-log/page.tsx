@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
+import AppFooter from "@/components/AppFooter";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import {
   useAuditLog,
@@ -235,6 +236,8 @@ export default function AuditLogPage() {
           )}
         </div>
       </main>
+
+      <AppFooter />
     </div>
   );
 }

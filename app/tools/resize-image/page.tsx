@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
+import AppFooter from "@/components/AppFooter";
 import ToolHero from "@/components/ToolHero";
 import SaveToPersonPicker from "@/components/SaveToPersonPicker";
 import { compressImage } from "@/lib/image/compress";
@@ -244,6 +245,8 @@ export default function ResizeImagePage() {
           )}
         </div>
       </main>
+
+      <AppFooter />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
+import AppFooter from "@/components/AppFooter";
 import ToolHero from "@/components/ToolHero";
 import SignaturePad, { type SignaturePadHandle } from "@/components/SignaturePad";
 import CameraCapture from "@/components/CameraCapture";
@@ -200,6 +201,8 @@ export default function SignatureToolPage() {
           )}
         </div>
       </main>
+
+      <AppFooter />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
+import AppFooter from "@/components/AppFooter";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import DocumentPreviewModal from "@/components/DocumentPreviewModal";
 import { createClient } from "@/lib/supabase/client";
@@ -427,6 +428,8 @@ export default function TrashPage() {
           )}
         </div>
       </main>
+
+      <AppFooter />
     </div>
   );
 }

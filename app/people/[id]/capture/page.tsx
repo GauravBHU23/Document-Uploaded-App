@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
+import AppFooter from "@/components/AppFooter";
 import CameraCapture from "@/components/CameraCapture";
 import { useAdmin } from "@/lib/auth/use-admin";
 import { usePerson } from "@/lib/people/hooks";
@@ -91,6 +92,8 @@ export default function CapturePage({ params }: { params: Promise<{ id: string }
           )}
         </div>
       </main>
+
+      <AppFooter />
     </div>
   );
 }

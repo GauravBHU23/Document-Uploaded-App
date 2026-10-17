@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import AppHeader from "@/components/AppHeader";
+import AppFooter from "@/components/AppFooter";
 
 const TOOLS = [
   {
@@ -87,6 +88,8 @@ export default function ToolsPage() {
           </ul>
         </div>
       </main>
+
+      <AppFooter />
     </div>
   );
 }

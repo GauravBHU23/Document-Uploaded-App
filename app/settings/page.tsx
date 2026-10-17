@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
+import AppFooter from "@/components/AppFooter";
 import { useAdmin, useUpdateDisplayName } from "@/lib/auth/use-admin";
 
 export default function SettingsPage() {
@@ -93,6 +94,8 @@ export default function SettingsPage() {
           )}
         </div>
       </main>
+
+      <AppFooter />
     </div>
   );
 }

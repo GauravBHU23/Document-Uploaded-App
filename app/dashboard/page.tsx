@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
+import AppFooter from "@/components/AppFooter";
 import InstallPrompt from "@/components/InstallPrompt";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
@@ -418,6 +419,8 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
+
+      <AppFooter />
 
       <NewPersonDialog
         open={dialogOpen}

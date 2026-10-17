@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
+import AppFooter from "@/components/AppFooter";
 import UploadDropzone from "@/components/UploadDropzone";
 import DocumentCard from "@/components/DocumentCard";
 import PersonAccessCard from "@/components/PersonAccessCard";
@@ -478,6 +479,8 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
         )}
         </div>
       </main>
+
+      <AppFooter />
 
       {person && (
         <NewPersonDialog
