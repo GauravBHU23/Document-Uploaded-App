@@ -302,3 +302,28 @@ export function useRenameDocument() {
     },
   });
 }
+
+/** Updates a document's optional notes field -- a separate mutation
+ * from rename since it's a distinct concern (free-text context about
+ * the document, not its identifying label). */
+export function useUpdateDocumentNotes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ documentId, notes }: { documentId: string; notes: string }) => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("documents")
+        .update({ notes: notes.trim() || null })
+        .eq("id", documentId)
+        .select()
+        .single();
+
+      if (error) throw new Error(error.message);
+      return data as Document;
+    },
+    onSuccess: (document) => {
+      queryClient.invalidateQueries({ queryKey: ["documents", document.person_id] });
+    },
+  });
+}

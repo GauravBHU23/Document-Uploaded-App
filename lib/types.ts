@@ -18,6 +18,7 @@ export type Document = {
   person_id: string;
   admin_id: string;
   label: string;
+  notes: string | null;
   storage_path: string;
   mime_type: string;
   size_bytes: number;

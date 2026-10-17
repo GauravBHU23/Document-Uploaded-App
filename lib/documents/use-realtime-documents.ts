@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -42,6 +44,79 @@ export function useRealtimeDocuments(personId: string) {
       supabase.removeChannel(channel);
     };
   }, [personId, queryClient]);
+}
+
+/**
+ * Global notifier for documents that arrive via a person's own PIN or
+ * upload-link token while the admin isn't looking -- without this,
+ * someone on the dashboard (or on a different person's page) has no
+ * way to know a new document just landed; they'd only find out by
+ * clicking into that specific person's folder. Meant to be mounted
+ * once, app-wide (in AppHeader, so it's present on every logged-in
+ * page), unlike useRealtimeDocuments/useRealtimeTrash which are
+ * scoped to whichever page actually needs the live list refreshed.
+ *
+ * Deliberately only toasts for source = 'self_upload' (PIN/upload-link
+ * uploads) -- the admin's own uploads/captures/tool-generated
+ * documents don't need a notification, since they just did it
+ * themselves. Suppressed entirely while already on that person's own
+ * folder page (useRealtimeDocuments there already updates the list
+ * live; a toast on top would be redundant).
+ */
+export function useNewDocumentNotifier() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const pathname = usePathname();
+  // The subscription below is set up once (it never re-runs on
+  // navigation, so no unsubscribe/resubscribe gap can drop an event);
+  // its handler reads the CURRENT path/router via these refs (kept in
+  // sync by a separate effect) instead of closing over values from
+  // whenever the subscription was first created.
+  const pathnameRef = useRef(pathname);
+  const routerRef = useRef(router);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+    routerRef.current = router;
+  }, [pathname, router]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("documents-new-self-upload-notifier")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "documents", filter: "source=eq.self_upload" },
+        async (payload) => {
+          const personId = payload.new.person_id as string;
+          if (pathnameRef.current === `/people/${personId}`) return;
+
+          queryClient.invalidateQueries({ queryKey: ["documents", "total-count"] });
+
+          const { data: person } = await supabase
+            .from("people")
+            .select("full_name")
+            .eq("id", personId)
+            .single();
+
+          const label = (payload.new.label as string) || "A document";
+          const personName = person?.full_name ?? "someone";
+          toast.info(`${personName} uploaded "${label}"`, {
+            action: {
+              label: "View",
+              onClick: () => {
+                routerRef.current.push(`/people/${personId}`);
+              },
+            },
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 }
 
 /**

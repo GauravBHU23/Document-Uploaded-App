@@ -27,6 +27,72 @@ export type ZipDownloadResult = {
   failed: string[];
 };
 
+export type PersonWithDocuments = {
+  personId: string;
+  personName: string;
+  documents: Document[];
+};
+
+/** Exports every person's active (non-trashed) documents into one zip,
+ * organized into one folder per person (so the structure stays
+ * meaningful after extraction, not just a flat pile of files). This
+ * is the only "get everything out" path in the app -- individual
+ * downloads and per-person zips both require opening each person one
+ * at a time, which doesn't scale as a backup/data-safety mechanism
+ * for an admin managing many people. Reuses the same sequential
+ * fetch + partial-failure tolerance as downloadDocumentsAsZip, just
+ * across every person instead of one. */
+export async function exportAllDocumentsAsZip(
+  supabase: SupabaseClient,
+  people: PersonWithDocuments[],
+  zipFilename: string,
+  onProgress?: (done: number, total: number) => void,
+): Promise<ZipDownloadResult> {
+  const zip = new JSZip();
+  const failed: string[] = [];
+
+  const totalDocuments = people.reduce((sum, p) => sum + p.documents.length, 0);
+  let done = 0;
+
+  for (const person of people) {
+    // Two different people can have the same display name; suffix
+    // the folder with a short id fragment in that case so their
+    // documents don't collide into one folder.
+    const folderName = `${person.personName} (${person.personId.slice(0, 8)})`;
+    const folder = zip.folder(folderName);
+    const seenNames = new Map<string, number>();
+
+    for (const doc of person.documents) {
+      try {
+        const url = await getSignedUrl(supabase, doc.storage_path, 60);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const blob = await response.blob();
+        const name = uniqueZipName(doc.label, doc.mime_type, seenNames);
+        folder?.file(name, blob);
+      } catch {
+        failed.push(`${person.personName} / ${doc.label}`);
+      }
+      done += 1;
+      onProgress?.(done, totalDocuments);
+    }
+  }
+
+  if (totalDocuments > 0 && failed.length === totalDocuments) {
+    throw new Error("Could not download any files");
+  }
+
+  const zipBlob = await zip.generateAsync({ type: "blob" });
+  const blobUrl = URL.createObjectURL(zipBlob);
+  const a = window.document.createElement("a");
+  a.href = blobUrl;
+  a.download = zipFilename.endsWith(".zip") ? zipFilename : `${zipFilename}.zip`;
+  a.click();
+  URL.revokeObjectURL(blobUrl);
+
+  return { succeeded: totalDocuments - failed.length, failed };
+}
+
 /** Downloads every given document and bundles them into a single .zip
  * file, instead of triggering N separate browser downloads. Fetches
  * sequentially (not in parallel) to stay gentle on the 60-second

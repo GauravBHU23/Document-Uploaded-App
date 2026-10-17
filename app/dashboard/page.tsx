@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -12,7 +12,11 @@ import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { useAdmin } from "@/lib/auth/use-admin";
 import { usePeople, useCreatePerson, useUpdatePerson, useDeletePerson } from "@/lib/people/hooks";
 import { useSearchDocuments, useTotalDocumentCount } from "@/lib/documents/hooks";
-import type { Person } from "@/lib/types";
+import { exportAllDocumentsAsZip, type PersonWithDocuments } from "@/lib/documents/zip";
+import { downloadPeopleAsCsv } from "@/lib/people/csv";
+import ZipDownloadProgressModal from "@/components/ZipDownloadProgressModal";
+import { createClient } from "@/lib/supabase/client";
+import type { Document, Person } from "@/lib/types";
 import NewPersonDialog from "./new-person-dialog";
 
 function formatSize(bytes: number) {
@@ -45,6 +49,10 @@ export default function DashboardPage() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState({ done: 0, total: 0 });
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { data: admin, isLoading: adminLoading, isError: adminError } = useAdmin();
   const { data: people, isLoading: peopleLoading, isError: peopleError } = usePeople(search);
@@ -54,6 +62,24 @@ export default function DashboardPage() {
   const updatePerson = useUpdatePerson();
   const deletePerson = useDeletePerson();
   const confirm = useConfirm();
+
+  // "/" jumps straight to search, unless the admin is already typing
+  // somewhere else (another input, textarea, or contenteditable) --
+  // otherwise it would hijack the key while e.g. renaming a document.
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "/") return;
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return;
+
+      event.preventDefault();
+      searchInputRef.current?.focus();
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   async function handleCreate(values: {
     fullName: string;
@@ -101,6 +127,79 @@ export default function DashboardPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not delete");
     }
+  }
+
+  async function handleExportAll() {
+    if (!admin) return;
+    const confirmed = await confirm({
+      title: "Export everything?",
+      description:
+        "Downloads one zip containing every person's documents, organized into a folder per person. This can take a while for a large workspace.",
+      confirmLabel: "Export",
+    });
+    if (!confirmed) return;
+
+    setExporting(true);
+    setExportProgress({ done: 0, total: 0 });
+    try {
+      const supabase = createClient();
+      const { data: allPeople, error: peopleFetchError } = await supabase
+        .from("people")
+        .select("id, full_name");
+      if (peopleFetchError) throw new Error(peopleFetchError.message);
+
+      const { data: allDocuments, error: documentsFetchError } = await supabase
+        .from("documents")
+        .select("*")
+        .is("deleted_at", null);
+      if (documentsFetchError) throw new Error(documentsFetchError.message);
+
+      const documentsByPerson = new Map<string, Document[]>();
+      for (const doc of (allDocuments ?? []) as Document[]) {
+        const list = documentsByPerson.get(doc.person_id) ?? [];
+        list.push(doc);
+        documentsByPerson.set(doc.person_id, list);
+      }
+
+      const peopleWithDocuments: PersonWithDocuments[] = (allPeople ?? [])
+        .map((p) => ({
+          personId: p.id,
+          personName: p.full_name,
+          documents: documentsByPerson.get(p.id) ?? [],
+        }))
+        .filter((p) => p.documents.length > 0);
+
+      if (peopleWithDocuments.length === 0) {
+        toast.error("No documents to export yet");
+        return;
+      }
+
+      const result = await exportAllDocumentsAsZip(
+        supabase,
+        peopleWithDocuments,
+        `docvault-export-${new Date().toISOString().slice(0, 10)}`,
+        (done, total) => setExportProgress({ done, total }),
+      );
+
+      if (result.failed.length > 0) {
+        toast.warning(`Exported ${result.succeeded} of ${result.succeeded + result.failed.length} documents — some couldn't be fetched`);
+      } else {
+        toast.success(`Exported ${result.succeeded} document${result.succeeded === 1 ? "" : "s"} across ${peopleWithDocuments.length} ${peopleWithDocuments.length === 1 ? "person" : "people"}`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  function handleExportCsv() {
+    if (!people || people.length === 0) {
+      toast.error("No people to export yet");
+      return;
+    }
+    downloadPeopleAsCsv(people, `docvault-people-${new Date().toISOString().slice(0, 10)}`);
+    toast.success(`Exported ${people.length} ${people.length === 1 ? "person" : "people"} as CSV`);
   }
 
   return (
@@ -222,12 +321,18 @@ export default function DashboardPage() {
                 <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
               </svg>
               <input
+                ref={searchInputRef}
                 type="search"
                 placeholder="Search people..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-zinc-300 bg-white/80 py-2.5 pl-9 pr-3 text-sm text-zinc-900 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-50"
+                className="w-full rounded-xl border border-zinc-300 bg-white/80 py-2.5 pl-9 pr-9 text-sm text-zinc-900 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-50"
               />
+              {!search && (
+                <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md border border-zinc-300 bg-zinc-100 px-1.5 py-0.5 text-[11px] font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                  /
+                </kbd>
+              )}
             </div>
             <div className="flex shrink-0 gap-2">
               <Link
@@ -254,6 +359,69 @@ export default function DashboardPage() {
                   <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6a1 1 0 110 2H7a1 1 0 010-2zm0 4h6a1 1 0 110 2H7a1 1 0 010-2zm0 4h3a1 1 0 110 2H7a1 1 0 010-2z" clipRule="evenodd" />
                 </svg>
               </Link>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setExportMenuOpen((v) => !v)}
+                  disabled={exporting || !people || people.length === 0}
+                  className="inline-flex items-center justify-center rounded-xl border border-zinc-200/80 bg-white/70 p-2.5 text-zinc-500 shadow-sm backdrop-blur-sm transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700/80 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  aria-label="Export"
+                  title="Export"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                    <path fillRule="evenodd" d="M10 12.5a.75.75 0 01-.75-.75V4.56L7.3 6.56a.75.75 0 11-1.1-1.02l3.25-3.5a.75.75 0 011.1 0l3.25 3.5a.75.75 0 11-1.1 1.02l-1.95-2V11.75a.75.75 0 01-.75.75z" clipRule="evenodd" />
+                    <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
+                  </svg>
+                </button>
+                <AnimatePresence>
+                  {exportMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setExportMenuOpen(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                        transition={{ duration: 0.15 }}
+                        className="glass-surface absolute right-0 top-full z-20 mt-2 w-56 overflow-hidden rounded-xl border border-zinc-200/80 shadow-xl dark:border-zinc-800/80"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            handleExportAll();
+                          }}
+                          className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 shrink-0 text-indigo-500">
+                            <path fillRule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5h-7.5z" clipRule="evenodd" />
+                            <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
+                          </svg>
+                          <div>
+                            <p className="font-medium">All documents</p>
+                            <p className="text-xs text-zinc-400 dark:text-zinc-500">.zip, one folder per person</p>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExportMenuOpen(false);
+                            handleExportCsv();
+                          }}
+                          className="flex w-full items-center gap-2.5 border-t border-zinc-200/80 px-4 py-3 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-800/80 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 shrink-0 text-emerald-500">
+                            <path fillRule="evenodd" d="M4.5 2.25a.75.75 0 01.75-.75h9a.75.75 0 01.53.22l4.5 4.5a.75.75 0 01.22.53v12.75a.75.75 0 01-.75.75h-14.25a.75.75 0 01-.75-.75V2.25zm9 1.5v3.75a.75.75 0 00.75.75h3.75l-4.5-4.5z" clipRule="evenodd" />
+                          </svg>
+                          <div>
+                            <p className="font-medium">People list</p>
+                            <p className="text-xs text-zinc-400 dark:text-zinc-500">.csv, opens in Excel/Sheets</p>
+                          </div>
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
               <Link
                 href="/tools"
                 className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200/80 bg-white/70 px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm transition-colors hover:bg-zinc-100 dark:border-zinc-700/80 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -434,6 +602,12 @@ export default function DashboardPage() {
         onSubmit={handleUpdate}
         submitting={updatePerson.isPending}
         person={editingPerson}
+      />
+
+      <ZipDownloadProgressModal
+        open={exporting}
+        done={exportProgress.done}
+        total={exportProgress.total}
       />
     </div>
   );

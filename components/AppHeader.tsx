@@ -8,6 +8,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import IdleWarningModal from "@/components/IdleWarningModal";
 import SessionBadge from "@/components/SessionBadge";
 import { useIdleLogout, clearLastActivity } from "@/lib/session/use-idle-logout";
+import { useNewDocumentNotifier } from "@/lib/documents/use-realtime-documents";
 
 type AppHeaderProps = {
   title: string;
@@ -18,6 +19,7 @@ type AppHeaderProps = {
 export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps) {
   const router = useRouter();
   const { secondsLeft, remainingMs, staySignedIn, idleTimeoutMs } = useIdleLogout();
+  useNewDocumentNotifier();
 
   async function handleSignOut() {
     const supabase = createClient();

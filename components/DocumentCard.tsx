@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getSignedUrl } from "@/lib/documents/upload";
-import { useDeleteDocument, useRenameDocument } from "@/lib/documents/hooks";
+import { useDeleteDocument, useRenameDocument, useUpdateDocumentNotes } from "@/lib/documents/hooks";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import DocumentPreviewModal from "@/components/DocumentPreviewModal";
 import type { Document } from "@/lib/types";
@@ -37,9 +37,12 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
   const [downloading, setDownloading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notes, setNotes] = useState(document.notes ?? "");
 
   const deleteDocument = useDeleteDocument();
   const renameDocument = useRenameDocument();
+  const updateNotes = useUpdateDocumentNotes();
   const confirm = useConfirm();
 
   const isImage = document.mime_type.startsWith("image/");
@@ -111,6 +114,22 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
       toast.error(err instanceof Error ? err.message : "Could not rename");
     } finally {
       setRenaming(false);
+    }
+  }
+
+  async function handleNotesSubmit() {
+    const trimmed = notes.trim();
+    if (trimmed === (document.notes ?? "")) {
+      setEditingNotes(false);
+      return;
+    }
+    try {
+      await updateNotes.mutateAsync({ documentId: document.id, notes: trimmed });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save notes");
+      setNotes(document.notes ?? "");
+    } finally {
+      setEditingNotes(false);
     }
   }
 
@@ -213,7 +232,50 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
             {formatSize(document.size_bytes)}
           </span>
+          {!selectable && !editingNotes && (
+            <button
+              type="button"
+              onClick={() => setEditingNotes(true)}
+              className={`ml-auto shrink-0 rounded p-0.5 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                document.notes ? "text-indigo-400" : "text-zinc-300 dark:text-zinc-600"
+              }`}
+              aria-label={document.notes ? "Edit note" : "Add a note"}
+              title={document.notes ? "Edit note" : "Add a note"}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+              </svg>
+            </button>
+          )}
         </div>
+        {editingNotes ? (
+          <textarea
+            autoFocus
+            rows={2}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            onBlur={handleNotesSubmit}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setNotes(document.notes ?? "");
+                setEditingNotes(false);
+              }
+            }}
+            placeholder="Add a note..."
+            className="mt-1.5 w-full resize-none rounded border border-indigo-400 px-1.5 py-1 text-xs outline-none dark:bg-zinc-900"
+          />
+        ) : (
+          document.notes && (
+            <button
+              type="button"
+              onClick={() => setEditingNotes(true)}
+              className="mt-1.5 block w-full truncate text-left text-xs italic text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+              title={document.notes}
+            >
+              {document.notes}
+            </button>
+          )
+        )}
       </div>
 
       {!selectable && (
