@@ -30,6 +30,14 @@
 // PIN and looks up admin_id itself (never trusts a client-supplied
 // admin_id), so a PIN only ever grants write access into the one
 // person's folder it belongs to.
+//
+// The "request_pin_reset" action (added in
+// 0019_pin_reset_requests.sql) lets someone who forgot their PIN get a
+// fresh one without knowing their old one -- it's the only action that
+// doesn't require a `pin` at all. request_person_pin_reset generates
+// and hashes a new PIN server-side and delivers the plaintext only to
+// the owning admin (via the realtime-readable pin_reset_deliveries
+// table), never back through this HTTP response.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -60,7 +68,7 @@ type PinRow = {
 };
 
 type RequestBody = {
-  action: "list" | "download" | "person_name" | "upload";
+  action: "list" | "download" | "person_name" | "upload" | "request_pin_reset";
   personId: string;
   pin?: string;
   documentId?: string;
@@ -121,6 +129,20 @@ Deno.serve(async (req) => {
     const { data, error } = await admin.rpc("get_person_name", { p_person_id: personId });
     if (error) return json({ error: "Could not look up person" }, 404);
     return json({ name: data });
+  }
+
+  if (action === "request_pin_reset") {
+    // No PIN required for this one -- it's specifically for someone who
+    // forgot theirs. request_person_pin_reset itself re-checks that the
+    // person exists and already has PIN access enabled, rate-limits to
+    // one success per 10 minutes, and never returns the new PIN here --
+    // it's delivered to the admin only, via pin_reset_deliveries.
+    const { error } = await admin.rpc("request_person_pin_reset", {
+      p_person_id: personId,
+    });
+
+    if (error) return json({ error: "Could not process request" }, 500);
+    return json({ ok: true });
   }
 
   if (!pin || typeof pin !== "string") {

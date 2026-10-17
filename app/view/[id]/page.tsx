@@ -8,6 +8,7 @@ import {
   listDocumentsForPin,
   getDownloadUrl,
   uploadDocumentForPin,
+  requestPinReset,
 } from "@/lib/pin-access/api";
 import DocumentPreviewModal from "@/components/DocumentPreviewModal";
 import PublicPageChrome from "@/components/PublicPageChrome";
@@ -41,6 +42,8 @@ export default function PersonViewPage({ params }: { params: Promise<{ id: strin
   const [uploading, setUploading] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<PinDocument | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [resetRequested, setResetRequested] = useState(false);
+  const [requestingReset, setRequestingReset] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -60,6 +63,21 @@ export default function PersonViewPage({ params }: { params: Promise<{ id: strin
       setError(err instanceof Error ? err.message : "Invalid PIN");
     } finally {
       setVerifying(false);
+    }
+  }
+
+  async function handleRequestReset() {
+    setRequestingReset(true);
+    try {
+      await requestPinReset(personId);
+      setResetRequested(true);
+    } catch {
+      // The endpoint deliberately never reveals whether the person/PIN
+      // existed, so there's nothing more specific to show on failure --
+      // treat it the same as success from the person's point of view.
+      setResetRequested(true);
+    } finally {
+      setRequestingReset(false);
     }
   }
 
@@ -191,6 +209,23 @@ export default function PersonViewPage({ params }: { params: Promise<{ id: strin
                 {verifying ? "Checking..." : "View my documents"}
               </button>
             </form>
+
+            <div className="mt-4 text-center text-sm">
+              {resetRequested ? (
+                <p className="text-emerald-600 dark:text-emerald-400">
+                  Request sent — ask whoever shared this link with you for your new PIN.
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleRequestReset}
+                  disabled={requestingReset || !personName}
+                  className="text-zinc-500 underline-offset-2 hover:text-indigo-600 hover:underline disabled:opacity-50 dark:text-zinc-400 dark:hover:text-indigo-400"
+                >
+                  {requestingReset ? "Requesting..." : "Forgot PIN? Request a new one"}
+                </button>
+              )}
+            </div>
           </motion.div>
         )}
 

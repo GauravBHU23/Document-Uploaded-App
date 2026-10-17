@@ -36,6 +36,13 @@ export async function getPersonName(personId: string): Promise<string> {
   return data.name;
 }
 
+export async function requestPinReset(personId: string): Promise<void> {
+  await callFunction<Record<string, never>>({
+    action: "request_pin_reset",
+    personId,
+  });
+}
+
 export async function listDocumentsForPin(
   personId: string,
   pin: string,
