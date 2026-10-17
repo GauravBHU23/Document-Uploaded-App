@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 
@@ -122,15 +122,17 @@ export function useNewDocumentNotifier() {
 /**
  * Notifies the admin the moment someone uses "Forgot PIN?" on their
  * view link (request_person_pin_reset in
- * supabase/migrations/0019_pin_reset_requests.sql). The new PIN is
- * delivered here as plaintext -- shown once in a toast with a copy
- * button -- then the row is deleted from pin_reset_deliveries right
- * away, so it never lingers at rest longer than it takes this
- * subscription to receive the INSERT event. RLS on that table already
- * restricts reads/deletes to the owning admin; this subscription just
- * receives what RLS would already allow a normal SELECT to see.
+ * supabase/migrations/0019_pin_reset_requests.sql) -- a live toast for
+ * whoever happens to be looking at the app right then. The delivery
+ * row itself is NOT deleted here: it stays in pin_reset_deliveries
+ * (RLS-protected, admin-only) until the admin explicitly dismisses it
+ * from the notification bell (see PinResetBell.tsx /
+ * useDismissPinReset below), so a reset isn't lost just because this
+ * toast was missed while the admin was away from the app.
  */
 export function usePinResetNotifier() {
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
@@ -139,9 +141,10 @@ export function usePinResetNotifier() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "pin_reset_deliveries" },
         async (payload) => {
-          const deliveryId = payload.new.id as string;
           const personId = payload.new.person_id as string;
           const pin = payload.new.plaintext_pin as string;
+
+          queryClient.invalidateQueries({ queryKey: ["pin-reset-deliveries"] });
 
           const { data: person } = await supabase
             .from("people")
@@ -160,8 +163,6 @@ export function usePinResetNotifier() {
               },
             },
           });
-
-          await supabase.from("pin_reset_deliveries").delete().eq("id", deliveryId);
         },
       )
       .subscribe();
@@ -169,7 +170,54 @@ export function usePinResetNotifier() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
+}
+
+export type PinResetDelivery = {
+  id: string;
+  person_id: string;
+  plaintext_pin: string;
+  created_at: string;
+  people: { full_name: string } | null;
+};
+
+/**
+ * All pending ("not yet dismissed") PIN-reset deliveries -- the data
+ * behind the notification bell. A row only disappears when the admin
+ * explicitly dismisses it (useDismissPinReset), so a reset that
+ * happened while the admin was away is still there whenever they next
+ * open the bell, not just as a toast that may have already scrolled by.
+ */
+export function usePendingPinResets() {
+  return useQuery({
+    queryKey: ["pin-reset-deliveries"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("pin_reset_deliveries")
+        .select("id, person_id, plaintext_pin, created_at, people(full_name)")
+        .order("created_at", { ascending: false });
+
+      if (error) throw new Error(error.message);
+      return data as unknown as PinResetDelivery[];
+    },
+    staleTime: 30_000,
+  });
+}
+
+export function useDismissPinReset() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (deliveryId: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.from("pin_reset_deliveries").delete().eq("id", deliveryId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pin-reset-deliveries"] });
+    },
+  });
 }
 
 /**

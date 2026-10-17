@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import ThemeToggle from "@/components/ThemeToggle";
 import IdleWarningModal from "@/components/IdleWarningModal";
 import SessionBadge from "@/components/SessionBadge";
+import PinResetBell from "@/components/PinResetBell";
 import { useIdleLogout, clearLastActivity } from "@/lib/session/use-idle-logout";
 import { useNewDocumentNotifier, usePinResetNotifier } from "@/lib/documents/use-realtime-documents";
 
@@ -76,6 +77,7 @@ export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps)
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <SessionBadge remainingMs={remainingMs} idleTimeoutMs={idleTimeoutMs} />
+          <PinResetBell />
           <ThemeToggle />
           <Link
             href="/settings"
