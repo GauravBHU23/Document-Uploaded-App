@@ -6,12 +6,23 @@ import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import { useAdmin, useUpdateDisplayName } from "@/lib/auth/use-admin";
+import {
+  getIdleTimeoutMs,
+  setIdleTimeoutMinutes,
+  DEFAULT_IDLE_TIMEOUT_MS,
+  IDLE_TIMEOUT_OPTIONS_MINUTES,
+} from "@/lib/session/use-idle-logout";
 
 export default function SettingsPage() {
   const { data: admin, isLoading } = useAdmin();
   const updateDisplayName = useUpdateDisplayName();
 
   const [displayName, setDisplayName] = useState("");
+  // Starts at the server-safe default (localStorage can only be read
+  // post-mount), then reconciled to the admin's actual saved choice in
+  // the effect below -- same hydration-safety pattern used throughout
+  // this app for any browser-only value.
+  const [timeoutMinutes, setTimeoutMinutes] = useState(DEFAULT_IDLE_TIMEOUT_MS / 60_000);
 
   useEffect(() => {
     if (admin) {
@@ -19,6 +30,11 @@ export default function SettingsPage() {
       setDisplayName(admin.display_name ?? "");
     }
   }, [admin]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTimeoutMinutes(getIdleTimeoutMs() / 60_000);
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,6 +44,12 @@ export default function SettingsPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save");
     }
+  }
+
+  function handleTimeoutChange(minutes: number) {
+    setTimeoutMinutes(minutes);
+    setIdleTimeoutMinutes(minutes);
+    toast.success(`Auto sign-out set to ${minutes} minutes`);
   }
 
   return (
@@ -90,6 +112,39 @@ export default function SettingsPage() {
                   {updateDisplayName.isPending ? "Saving..." : "Save changes"}
                 </motion.button>
               </form>
+            </motion.div>
+          )}
+
+          {admin && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.05 }}
+              className="glass-surface mt-6 rounded-2xl border border-zinc-200/80 p-6 shadow-sm dark:border-zinc-800/80"
+            >
+              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                Auto sign-out
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                You&apos;re signed out after this much time with no activity (clicking, typing, scrolling). Applies to this device only.
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {IDLE_TIMEOUT_OPTIONS_MINUTES.map((minutes) => (
+                  <button
+                    key={minutes}
+                    type="button"
+                    onClick={() => handleTimeoutChange(minutes)}
+                    className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
+                      timeoutMinutes === minutes
+                        ? "accent-gradient border-transparent text-white shadow-md shadow-indigo-600/20"
+                        : "border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                    }`}
+                  >
+                    {minutes} min
+                  </button>
+                ))}
+              </div>
             </motion.div>
           )}
         </div>

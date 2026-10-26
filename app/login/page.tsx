@@ -1,12 +1,10 @@
 "use client";
 
-import { use, useState, type FormEvent } from "react";
+import { use, useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
-import { IDLE_TIMEOUT_MS, clearLastActivity } from "@/lib/session/use-idle-logout";
-
-const IDLE_TIMEOUT_MINUTES = IDLE_TIMEOUT_MS / 60_000;
+import { DEFAULT_IDLE_TIMEOUT_MS, getIdleTimeoutMs, clearLastActivity } from "@/lib/session/use-idle-logout";
 
 const FEATURES = [
   { title: "Capture on phone, land on desktop", desc: "Upload instantly syncs across every signed-in device." },
@@ -32,6 +30,16 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Starts at the default (server-safe), reconciled to the admin's
+  // actual saved per-device preference post-mount -- same
+  // hydration-safety pattern as every other browser-only value in this
+  // app, since localStorage can't be read during SSR.
+  const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState(DEFAULT_IDLE_TIMEOUT_MS / 60_000);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIdleTimeoutMinutes(getIdleTimeoutMs() / 60_000);
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -160,7 +168,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
                     clipRule="evenodd"
                   />
                 </svg>
-                You were signed out after {IDLE_TIMEOUT_MINUTES} minutes of inactivity, to keep this account secure.
+                You were signed out after {idleTimeoutMinutes} minutes of inactivity, to keep this account secure.
               </motion.p>
             )}
 
