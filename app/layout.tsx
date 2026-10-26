@@ -36,6 +36,7 @@ export const metadata: Metadata = {
 
 export const viewport = {
   themeColor: "#6246ea",
+  viewportFit: "cover" as const,
 };
 
 // Runs before hydration so the saved theme applies on the very first

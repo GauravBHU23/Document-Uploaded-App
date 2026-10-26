@@ -56,8 +56,8 @@ export default function PublicPageChrome({ children }: { children: React.ReactNo
 
       <div className="flex flex-1 flex-col">{children}</div>
 
-      <footer className="border-t border-zinc-200/70 px-4 py-6 sm:px-6 lg:px-10 2xl:px-16 dark:border-zinc-800/70">
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-4 sm:flex-row sm:justify-between">
+      <footer className="border-t border-zinc-200/70 px-4 py-5 sm:px-6 sm:py-6 lg:px-10 2xl:px-16 dark:border-zinc-800/70">
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:gap-4 sm:text-left">
           <div className="flex items-center gap-2.5">
             <div className="accent-gradient flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5">
@@ -65,14 +65,14 @@ export default function PublicPageChrome({ children }: { children: React.ReactNo
                 <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
               </svg>
             </div>
-            <div>
+            <div className="text-left">
               <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">DocVault</p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">Document workspace</p>
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-1.5 sm:items-end">
-            <p className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+          <div className="flex flex-col items-center gap-1 sm:items-end">
+            <p className="flex max-w-[22rem] items-center justify-center gap-1.5 text-xs font-medium text-zinc-600 sm:justify-end dark:text-zinc-300">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 shrink-0 text-emerald-500">
                 <path fillRule="evenodd" d="M10 1c-1.716 0-3.408.106-5.07.31C3.806 1.45 3 2.414 3 3.517V18a1 1 0 001.447.894L10 16.118l5.553 2.776A1 1 0 0017 18V3.517c0-1.103-.806-2.068-1.93-2.207A41.403 41.403 0 0010 1z" clipRule="evenodd" />
               </svg>
@@ -84,9 +84,12 @@ export default function PublicPageChrome({ children }: { children: React.ReactNo
           </div>
         </div>
 
-        <div className="mx-auto mt-5 w-full max-w-7xl border-t border-zinc-200/70 pt-4 text-center dark:border-zinc-800/70">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Developed by <span className="font-medium text-zinc-700 dark:text-zinc-200">Gaurav Kumar</span> — Department of Computer Science, IIT BHU Varanasi
+        <div className="mx-auto mt-4 w-full max-w-7xl border-t border-zinc-200/70 pt-3 text-center sm:mt-5 sm:pt-4 dark:border-zinc-800/70">
+          <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+            Developed by <span className="font-medium text-zinc-700 dark:text-zinc-200">Gaurav Kumar</span>
+            <br className="sm:hidden" />
+            <span className="hidden sm:inline"> — </span>
+            Department of Computer Science, IIT BHU Varanasi
           </p>
         </div>
       </footer>

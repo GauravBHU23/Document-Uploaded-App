@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useSetPersonPin, useClearPersonPin } from "@/lib/people/hooks";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
+import LinkQrModal from "@/components/LinkQrModal";
 import type { Person } from "@/lib/types";
 
 function generatePin() {
@@ -15,6 +16,7 @@ export default function PersonAccessCard({ person }: { person: Person }) {
   const [editing, setEditing] = useState(false);
   const [pin, setPin] = useState("");
   const [copied, setCopied] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   // Starts empty on both server and the client's first render
   // (window.location.origin is only knowable client-side), then set
   // post-mount -- this component currently only ever mounts after its
@@ -118,6 +120,16 @@ export default function PersonAccessCard({ person }: { person: Person }) {
               {copied ? "Copied!" : "Copy"}
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => setQrOpen(true)}
+            className="flex items-center justify-center gap-2 rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+              <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H5v3a1 1 0 01-2 0V4zm9-1a1 1 0 100 2h3v3a1 1 0 102 0V4a1 1 0 00-1-1h-4zm-9 9a1 1 0 112 0v3h3a1 1 0 110 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 110-2h3v-3a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            Show QR code
+          </button>
           <div className="flex gap-2">
             <button
               type="button"
@@ -136,6 +148,14 @@ export default function PersonAccessCard({ person }: { person: Person }) {
           </div>
         </div>
       )}
+
+      <LinkQrModal
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        url={viewUrl}
+        title="Scan to view documents"
+        description={`Opens ${person.full_name}'s document page — they'll still need the PIN to view anything.`}
+      />
 
       {!hasPin && !editing && (
         <button

@@ -39,6 +39,7 @@ export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps)
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className="glass-surface sticky top-0 z-20 border-b border-zinc-200/70 px-4 py-3.5 sm:px-6 lg:px-10 2xl:px-16 dark:border-zinc-800/70"
+      style={{ paddingTop: "calc(0.875rem + env(safe-area-inset-top, 0px))" }}
     >
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
         <div className="flex min-w-0 items-center gap-3">
@@ -75,7 +76,7 @@ export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps)
             )}
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <SessionBadge remainingMs={remainingMs} idleTimeoutMs={idleTimeoutMs} />
           <PinResetBell />
           <ThemeToggle />
@@ -98,7 +99,9 @@ export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps)
             whileTap={{ scale: 0.97 }}
             type="button"
             onClick={handleSignOut}
-            className="group flex shrink-0 items-center gap-1.5 rounded-xl border border-zinc-200/80 bg-white/70 px-3.5 py-2 text-xs font-medium text-zinc-600 shadow-sm backdrop-blur-sm transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 sm:text-sm dark:border-zinc-700/80 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:border-red-900/60 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+            aria-label="Sign out"
+            title="Sign out"
+            className="group flex shrink-0 items-center gap-1.5 rounded-xl border border-zinc-200/80 bg-white/70 p-2 text-xs font-medium text-zinc-600 shadow-sm backdrop-blur-sm transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 sm:px-3.5 sm:py-2 sm:text-sm dark:border-zinc-700/80 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:border-red-900/60 dark:hover:bg-red-950/30 dark:hover:text-red-400"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-zinc-400 transition-colors group-hover:text-red-500 dark:text-zinc-500">
               <path
@@ -112,7 +115,7 @@ export default function AppHeader({ title, subtitle, backHref }: AppHeaderProps)
                 clipRule="evenodd"
               />
             </svg>
-            Sign out
+            <span className="hidden sm:inline">Sign out</span>
           </motion.button>
         </div>
       </div>
