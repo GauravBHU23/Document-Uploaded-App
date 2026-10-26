@@ -47,6 +47,23 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
     setLoading(true);
 
     const supabase = createClient();
+
+    // Checked BEFORE attempting sign-in, so a locked-out email never
+    // even reaches Supabase Auth -- same rate-limiting this app
+    // already applies to the PIN flows (pin_attempts,
+    // pin_reset_requests), now also covering the admin's own
+    // credential login, which previously had no app-level protection
+    // against repeated password guesses.
+    const { data: allowed, error: rateLimitError } = await supabase.rpc("check_login_rate_limit", {
+      p_email: email,
+    });
+
+    if (!rateLimitError && allowed === false) {
+      setLoading(false);
+      setError("Too many failed attempts. Please wait a few minutes and try again.");
+      return;
+    }
+
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -55,6 +72,11 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
     setLoading(false);
 
     if (signInError) {
+      // Best-effort: if this RPC itself fails for any reason, that's
+      // not something to surface -- the admin still needs to see their
+      // actual login error below, not a secondary error about
+      // rate-limit bookkeeping.
+      await supabase.rpc("record_login_failure", { p_email: email });
       setError("Login failed. Check your email and password.");
       return;
     }
