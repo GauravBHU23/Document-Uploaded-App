@@ -64,7 +64,7 @@ export default function PinResetBell() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -6, scale: 0.98 }}
               transition={{ duration: 0.15 }}
-              className="glass-surface absolute right-0 top-full z-20 mt-2 w-80 rounded-2xl border border-zinc-200/70 p-2 shadow-xl dark:border-zinc-800/70"
+              className="glass-surface fixed left-4 right-4 top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-30 rounded-2xl border border-zinc-200/70 p-2 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80 dark:border-zinc-800/70"
             >
               <p className="px-2.5 py-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
                 PIN reset requests
