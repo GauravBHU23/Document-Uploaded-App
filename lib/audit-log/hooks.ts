@@ -73,4 +73,25 @@ export function useDeleteAuditLogEntry() {
   });
 }
 
+/** Deletes several audit log entries in one call, for the page's
+ * "select and delete" multi-select mode -- mirrors the single-entry
+ * delete's security posture exactly (same RLS-equivalent scoping to
+ * the calling admin's own rows), just batched. See migration
+ * 0026_audit_log_bulk_delete.sql. */
+export function useDeleteAuditLogEntries() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (entryIds: string[]) => {
+      if (entryIds.length === 0) return;
+      const supabase = createClient();
+      const { error } = await supabase.rpc("delete_audit_log_entries", { p_entry_ids: entryIds });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["audit-log"] });
+    },
+  });
+}
+
 export { PAGE_SIZE };

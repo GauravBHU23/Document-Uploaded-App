@@ -10,6 +10,7 @@ import { useConfirm } from "@/components/ConfirmDialogProvider";
 import {
   useAuditLog,
   useDeleteAuditLogEntry,
+  useDeleteAuditLogEntries,
   PAGE_SIZE,
   type AuditAction,
   type AuditLogEntry,
@@ -115,7 +116,11 @@ export default function AuditLogPage() {
   const [page, setPage] = useState(0);
   const { data, isLoading } = useAuditLog(page);
   const deleteEntry = useDeleteAuditLogEntry();
+  const deleteEntries = useDeleteAuditLogEntries();
   const confirm = useConfirm();
+
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
@@ -131,6 +136,43 @@ export default function AuditLogPage() {
       await deleteEntry.mutateAsync(entry.id);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not delete entry");
+    }
+  }
+
+  function toggleSelect(entryId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(entryId)) next.delete(entryId);
+      else next.add(entryId);
+      return next;
+    });
+  }
+
+  function handleSelectAll() {
+    if (!data) return;
+    setSelectedIds(new Set(data.entries.map((e) => e.id)));
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return;
+    const confirmed = await confirm({
+      title: `Delete ${selectedIds.size} entr${selectedIds.size === 1 ? "y" : "ies"}?`,
+      description: "These will be removed from the audit log. This can't be undone.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!confirmed) return;
+    try {
+      await deleteEntries.mutateAsync(Array.from(selectedIds));
+      toast.success(`Deleted ${selectedIds.size} entr${selectedIds.size === 1 ? "y" : "ies"}`);
+      exitSelectMode();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not delete entries");
     }
   }
 
@@ -168,10 +210,54 @@ export default function AuditLogPage() {
 
           {data && data.entries.length > 0 && (
             <>
+              <div className="mb-3 flex items-center justify-end">
+                {!selectMode ? (
+                  <button
+                    type="button"
+                    onClick={() => setSelectMode(true)}
+                    className="rounded-xl border border-zinc-200/80 bg-white/70 px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm transition-colors hover:bg-zinc-100 dark:border-zinc-700/80 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  >
+                    Select
+                  </button>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                      {selectedIds.size} selected
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleSelectAll}
+                      className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                    >
+                      Select all
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleBulkDelete}
+                      disabled={selectedIds.size === 0 || deleteEntries.isPending}
+                      className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      type="button"
+                      onClick={exitSelectMode}
+                      className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900"
+                      aria-label="Cancel selection"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <ul className="flex flex-col gap-2">
                 <AnimatePresence initial={false}>
                   {data.entries.map((entry) => {
                     const meta = ACTION_META[entry.action];
+                    const selected = selectedIds.has(entry.id);
                     return (
                       <motion.li
                         key={entry.id}
@@ -179,30 +265,55 @@ export default function AuditLogPage() {
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: 24, transition: { duration: 0.15 } }}
-                        className="group flex items-start gap-3 rounded-xl border border-zinc-200/80 bg-white/80 p-3 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/60"
+                        onClick={() => selectMode && toggleSelect(entry.id)}
+                        className={`group flex items-start gap-3 rounded-xl border p-3 shadow-sm transition-colors ${
+                          selectMode ? "cursor-pointer" : ""
+                        } ${
+                          selected
+                            ? "border-indigo-400 bg-indigo-50/60 dark:border-indigo-500 dark:bg-indigo-950/30"
+                            : "border-zinc-200/80 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-950/60"
+                        }`}
                       >
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${COLOR_CLASSES[meta.color]}`}>
-                          {ICONS[meta.icon]}
-                        </div>
+                        {selectMode ? (
+                          <span
+                            className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-2 ${
+                              selected
+                                ? "border-indigo-500 bg-indigo-500 text-white"
+                                : "border-zinc-300 dark:border-zinc-600"
+                            }`}
+                          >
+                            {selected && (
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                                <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </span>
+                        ) : (
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${COLOR_CLASSES[meta.color]}`}>
+                            {ICONS[meta.icon]}
+                          </div>
+                        )}
                         <div className="min-w-0 flex-1">
                           <p className="text-sm text-zinc-700 dark:text-zinc-300">{describeEntry(entry)}</p>
                           <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{timeAgo(entry.created_at)}</p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(entry)}
-                          disabled={deleteEntry.isPending}
-                          className="shrink-0 rounded-lg p-1.5 text-zinc-300 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-50 dark:text-zinc-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
-                          aria-label="Delete this entry"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                            <path
-                              fillRule="evenodd"
-                              d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </button>
+                        {!selectMode && (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(entry)}
+                            disabled={deleteEntry.isPending}
+                            className="shrink-0 rounded-lg p-1.5 text-zinc-300 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-50 dark:text-zinc-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+                            aria-label="Delete this entry"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                              <path
+                                fillRule="evenodd"
+                                d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        )}
                       </motion.li>
                     );
                   })}
@@ -213,7 +324,10 @@ export default function AuditLogPage() {
                 <div className="mt-5 flex items-center justify-center gap-3">
                   <button
                     type="button"
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    onClick={() => {
+                      setPage((p) => Math.max(0, p - 1));
+                      exitSelectMode();
+                    }}
                     disabled={page === 0}
                     className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
                   >
@@ -224,7 +338,10 @@ export default function AuditLogPage() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                    onClick={() => {
+                      setPage((p) => Math.min(totalPages - 1, p + 1));
+                      exitSelectMode();
+                    }}
                     disabled={page >= totalPages - 1}
                     className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
                   >
