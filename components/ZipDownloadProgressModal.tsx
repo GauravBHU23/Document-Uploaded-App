@@ -6,6 +6,11 @@ type ZipDownloadProgressModalProps = {
   open: boolean;
   done: number;
   total: number;
+  /** What happens after every file is fetched -- "building the zip"
+   * by default, since this started as zip-only; the person-folder page
+   * also reuses this modal for merging into one PDF, which needed
+   * different wording to not say "zip" while actually merging a PDF. */
+  actionLabel?: string;
 };
 
 /** Shows live 1–100% progress while downloadDocumentsAsZip fetches
@@ -15,7 +20,7 @@ type ZipDownloadProgressModalProps = {
  * app having frozen. No close button: this isn't dismissible mid-zip,
  * since there's nothing useful to do until it finishes (it already
  * tolerates individual file failures internally). */
-export default function ZipDownloadProgressModal({ open, done, total }: ZipDownloadProgressModalProps) {
+export default function ZipDownloadProgressModal({ open, done, total, actionLabel = "building the zip" }: ZipDownloadProgressModalProps) {
   const percent = total > 0 ? Math.round((done / total) * 100) : 0;
 
   return (
@@ -46,7 +51,7 @@ export default function ZipDownloadProgressModal({ open, done, total }: ZipDownl
               Preparing your download
             </h2>
             <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-              {done} of {total} file{total === 1 ? "" : "s"} fetched — building the zip...
+              {done} of {total} file{total === 1 ? "" : "s"} fetched — {actionLabel}...
             </p>
 
             <div className="mt-5 h-2.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">

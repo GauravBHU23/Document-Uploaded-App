@@ -17,6 +17,7 @@ import { usePerson, useUpdatePerson } from "@/lib/people/hooks";
 import { useDocuments, useBulkDeleteDocuments } from "@/lib/documents/hooks";
 import { useRealtimeDocuments } from "@/lib/documents/use-realtime-documents";
 import { downloadDocumentsAsZip } from "@/lib/documents/zip";
+import { downloadDocumentsAsMergedPdf } from "@/lib/documents/mergedPdf";
 import ZipDownloadProgressModal from "@/components/ZipDownloadProgressModal";
 import { createClient } from "@/lib/supabase/client";
 import type { DocumentSource } from "@/lib/types";
@@ -51,6 +52,8 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
   const [bulkDownloading, setBulkDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState({ done: 0, total: 0 });
   const [editOpen, setEditOpen] = useState(false);
+  const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
+  const [downloadMode, setDownloadMode] = useState<"zip" | "pdf">("zip");
 
   const bulkDelete = useBulkDeleteDocuments();
   const updatePerson = useUpdatePerson();
@@ -110,6 +113,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
 
   async function handleBulkDownload() {
     if (selectedDocuments.length === 0 || !person) return;
+    setDownloadMode("zip");
     setBulkDownloading(true);
     setDownloadProgress({ done: 0, total: selectedDocuments.length });
     try {
@@ -134,6 +138,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
 
   async function handleDownloadAll() {
     if (!documents || documents.length === 0 || !person) return;
+    setDownloadMode("zip");
     setBulkDownloading(true);
     setDownloadProgress({ done: 0, total: documents.length });
     try {
@@ -151,6 +156,34 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not download all files");
+    } finally {
+      setBulkDownloading(false);
+    }
+  }
+
+  async function handleDownloadAllAsPdf() {
+    if (!documents || documents.length === 0 || !person) return;
+    setDownloadMode("pdf");
+    setBulkDownloading(true);
+    setDownloadProgress({ done: 0, total: documents.length });
+    try {
+      const supabase = createClient();
+      const result = await downloadDocumentsAsMergedPdf(
+        supabase,
+        documents,
+        `${person.full_name}-documents`,
+        (done, total) => setDownloadProgress({ done, total }),
+      );
+      const notes: string[] = [];
+      if (result.failed.length > 0) notes.push(`couldn't fetch: ${result.failed.join(", ")}`);
+      if (result.skipped.length > 0) notes.push(`skipped (not a PDF/image): ${result.skipped.join(", ")}`);
+      if (notes.length > 0) {
+        toast.warning(`Merged ${result.succeeded} of ${documents.length} — ${notes.join("; ")}`);
+      } else {
+        toast.success(`Merged ${result.succeeded} documents into one PDF`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not merge documents into a PDF");
     } finally {
       setBulkDownloading(false);
     }
@@ -294,14 +327,51 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
                 </div>
                 {documents && documents.length > 0 && !selectMode && (
                   <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={handleDownloadAll}
-                      disabled={bulkDownloading}
-                      className="text-sm font-medium text-indigo-600 hover:underline disabled:opacity-50 dark:text-indigo-400"
-                    >
-                      {bulkDownloading ? "Zipping..." : "Download all"}
-                    </button>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setDownloadMenuOpen((v) => !v)}
+                        disabled={bulkDownloading}
+                        className="text-sm font-medium text-indigo-600 hover:underline disabled:opacity-50 dark:text-indigo-400"
+                      >
+                        {bulkDownloading ? "Preparing..." : "Download all"}
+                      </button>
+                      <AnimatePresence>
+                        {downloadMenuOpen && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setDownloadMenuOpen(false)} />
+                            <motion.div
+                              initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                              transition={{ duration: 0.15 }}
+                              className="glass-surface absolute left-0 top-full z-20 mt-2 w-48 overflow-hidden rounded-xl border border-zinc-200/70 shadow-xl dark:border-zinc-800/70"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDownloadMenuOpen(false);
+                                  handleDownloadAll();
+                                }}
+                                className="block w-full px-4 py-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                              >
+                                As .zip (originals)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDownloadMenuOpen(false);
+                                  handleDownloadAllAsPdf();
+                                }}
+                                className="block w-full border-t border-zinc-200/80 px-4 py-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-800/80 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                              >
+                                As one merged PDF
+                              </button>
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setSelectMode(true)}
@@ -496,6 +566,7 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
         open={bulkDownloading}
         done={downloadProgress.done}
         total={downloadProgress.total}
+        actionLabel={downloadMode === "pdf" ? "merging into a PDF" : "building the zip"}
       />
     </div>
   );
