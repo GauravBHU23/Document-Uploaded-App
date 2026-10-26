@@ -15,21 +15,24 @@ type AnimatedNumberProps = {
  * real value post-hydration; subsequent value changes animate from
  * wherever the spring currently is. */
 export default function AnimatedNumber({ value, className }: AnimatedNumberProps) {
-  const [mounted, setMounted] = useState(false);
   const motionValue = useMotionValue(0);
   const spring = useSpring(motionValue, { stiffness: 120, damping: 20, mass: 0.6 });
   const display = useTransform(spring, (v) => Math.round(v).toLocaleString());
   const spanRef = useRef<HTMLSpanElement>(null);
 
+  // The span's text is ALWAYS written imperatively (never through JSX
+  // children) -- mixing a React-rendered text child with direct
+  // textContent writes doesn't work: as soon as any state update here
+  // triggers a re-render, React reconciles the JSX child back over
+  // whatever was just written to the DOM, clobbering it. That was the
+  // bug behind stat tiles going permanently blank whenever the real
+  // value was 0 (people?.length ?? 0 etc. render 0 on the very first,
+  // pre-hydration pass too, so there was no value CHANGE for the
+  // animation to key off of, and the only text that ever reached the
+  // DOM -- "0" from the server-rendered pass -- got wiped by the
+  // mounted-flag re-render that followed it).
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
     motionValue.set(value);
-    // Animating from 0 to a value that's ALSO 0 (e.g. "0 documents")
-    // never fires the spring's "change" event below -- nothing moved --
-    // so the span would be left showing the empty string from the
-    // `mounted ? "" : "0"` render below forever. Seed it directly so a
-    // genuine zero still displays as "0".
     if (spanRef.current) spanRef.current.textContent = value.toLocaleString();
   }, [value, motionValue]);
 
@@ -39,9 +42,5 @@ export default function AnimatedNumber({ value, className }: AnimatedNumberProps
     });
   }, [display]);
 
-  return (
-    <motion.span ref={spanRef} className={className}>
-      {mounted ? "" : "0"}
-    </motion.span>
-  );
+  return <motion.span ref={spanRef} className={className} suppressHydrationWarning />;
 }
