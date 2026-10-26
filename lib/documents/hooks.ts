@@ -415,13 +415,13 @@ export function useUpdateDocumentExpiry() {
  * the past or within the next 30 days -- the data behind the
  * dashboard's "expiring soon" section. Ordered soonest-first so
  * already-expired documents surface at the top. */
-export function useExpiringSoonDocuments() {
+export function useExpiringSoonDocuments(warningDays: number = 30) {
   return useQuery({
-    queryKey: ["documents", "expiring-soon"],
+    queryKey: ["documents", "expiring-soon", warningDays],
     queryFn: async () => {
       const supabase = createClient();
       const horizon = new Date();
-      horizon.setDate(horizon.getDate() + 30);
+      horizon.setDate(horizon.getDate() + warningDays);
       const horizonStr = horizon.toISOString().slice(0, 10);
 
       const { data, error } = await supabase

@@ -64,7 +64,7 @@ export default function DashboardPage() {
   const { data: people, isLoading: peopleLoading, isError: peopleError } = usePeople(search);
   const { data: matchedDocuments, isLoading: documentsSearchLoading } = useSearchDocuments(search);
   const { data: totalDocuments } = useTotalDocumentCount();
-  const { data: expiringSoon } = useExpiringSoonDocuments();
+  const { data: expiringSoon } = useExpiringSoonDocuments(admin?.expiry_warning_days ?? 30);
   const [expiringDismissed, setExpiringDismissed] = useState(false);
   const { data: labelCounts } = useDocumentLabelCounts();
   const [browseLabel, setBrowseLabel] = useState<string | null>(null);

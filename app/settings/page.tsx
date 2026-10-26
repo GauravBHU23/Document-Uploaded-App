@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
-import { useAdmin, useUpdateDisplayName } from "@/lib/auth/use-admin";
+import { useAdmin, useUpdateDisplayName, useUpdateRetentionSettings } from "@/lib/auth/use-admin";
 import {
   getIdleTimeoutMs,
   setIdleTimeoutMinutes,
@@ -16,6 +16,7 @@ import {
 export default function SettingsPage() {
   const { data: admin, isLoading } = useAdmin();
   const updateDisplayName = useUpdateDisplayName();
+  const updateRetentionSettings = useUpdateRetentionSettings();
 
   const [displayName, setDisplayName] = useState("");
   // Starts at the server-safe default (localStorage can only be read
@@ -23,11 +24,17 @@ export default function SettingsPage() {
   // the effect below -- same hydration-safety pattern used throughout
   // this app for any browser-only value.
   const [timeoutMinutes, setTimeoutMinutes] = useState(DEFAULT_IDLE_TIMEOUT_MS / 60_000);
+  const [trashRetentionDays, setTrashRetentionDays] = useState(30);
+  const [expiryWarningDays, setExpiryWarningDays] = useState(30);
 
   useEffect(() => {
     if (admin) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplayName(admin.display_name ?? "");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTrashRetentionDays(admin.trash_retention_days);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setExpiryWarningDays(admin.expiry_warning_days);
     }
   }, [admin]);
 
@@ -50,6 +57,16 @@ export default function SettingsPage() {
     setTimeoutMinutes(minutes);
     setIdleTimeoutMinutes(minutes);
     toast.success(`Auto sign-out set to ${minutes} minutes`);
+  }
+
+  async function handleRetentionSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      await updateRetentionSettings.mutateAsync({ trashRetentionDays, expiryWarningDays });
+      toast.success("Saved");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save");
+    }
   }
 
   return (
@@ -145,6 +162,70 @@ export default function SettingsPage() {
                   </button>
                 ))}
               </div>
+            </motion.div>
+          )}
+
+          {admin && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="glass-surface mt-6 rounded-2xl border border-zinc-200/80 p-6 shadow-sm dark:border-zinc-800/80"
+            >
+              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                Document retention
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                How long deleted documents stay recoverable in Trash, and how far ahead expiring documents are flagged.
+              </p>
+
+              <form onSubmit={handleRetentionSubmit} className="mt-5 flex flex-col gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Trash retention (days)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={trashRetentionDays}
+                    onChange={(e) => setTrashRetentionDays(Number(e.target.value))}
+                    className="mt-1.5 w-32 rounded-xl border border-zinc-300 bg-white/80 px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Expiry warning window (days)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={expiryWarningDays}
+                    onChange={(e) => setExpiryWarningDays(Number(e.target.value))}
+                    className="mt-1.5 w-32 rounded-xl border border-zinc-300 bg-white/80 px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-50"
+                  />
+                  <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                    Documents expiring within this many days show the dashboard banner, the card badge, and the daily email summary.
+                  </p>
+                </div>
+
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={
+                    updateRetentionSettings.isPending ||
+                    trashRetentionDays < 1 ||
+                    trashRetentionDays > 365 ||
+                    expiryWarningDays < 1 ||
+                    expiryWarningDays > 365
+                  }
+                  className="accent-gradient mt-1 self-start rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-md shadow-indigo-600/20 transition-opacity hover:opacity-95 disabled:opacity-50"
+                >
+                  {updateRetentionSettings.isPending ? "Saving..." : "Save changes"}
+                </motion.button>
+              </form>
             </motion.div>
           )}
         </div>

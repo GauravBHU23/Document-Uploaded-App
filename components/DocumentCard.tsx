@@ -29,9 +29,24 @@ type DocumentCardProps = {
   selectable?: boolean;
   selected?: boolean;
   onToggleSelect?: (documentId: string) => void;
+  /** How many days out counts as "expiring soon" for the badge --
+   * mirrors the admin's own configurable expiry_warning_days
+   * (migration 0025), defaulting to 30 for callers that don't pass it. */
+  expiryWarningDays?: number;
+  /** Shown in the delete confirmation's "can be restored within N
+   * days" text -- mirrors the admin's own configurable
+   * trash_retention_days (migration 0025), defaulting to 30. */
+  trashRetentionDays?: number;
 };
 
-export default function DocumentCard({ document, selectable, selected, onToggleSelect }: DocumentCardProps) {
+export default function DocumentCard({
+  document,
+  selectable,
+  selected,
+  onToggleSelect,
+  expiryWarningDays = 30,
+  trashRetentionDays = 30,
+}: DocumentCardProps) {
   const [renaming, setRenaming] = useState(false);
   const [label, setLabel] = useState(document.label);
   const [downloading, setDownloading] = useState(false);
@@ -90,7 +105,7 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
   async function handleDelete() {
     const confirmed = await confirm({
       title: `Delete "${document.label}"?`,
-      description: "It will move to Trash and can be restored within 30 days.",
+      description: `It will move to Trash and can be restored within ${trashRetentionDays} day${trashRetentionDays === 1 ? "" : "s"}.`,
       confirmLabel: "Delete",
       danger: true,
     });
@@ -160,7 +175,7 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
     if (!document.expiry_date) return null;
     if (document.expiry_date < todayStr) return "expired";
     const warnBy = new Date();
-    warnBy.setDate(warnBy.getDate() + 30);
+    warnBy.setDate(warnBy.getDate() + expiryWarningDays);
     if (document.expiry_date <= warnBy.toISOString().slice(0, 10)) return "soon";
     return null;
   })();

@@ -18,7 +18,7 @@ import {
   useBulkPermanentlyDeleteDocuments,
 } from "@/lib/documents/hooks";
 import { useRealtimeTrash } from "@/lib/documents/use-realtime-documents";
-import { TRASH_RETENTION_DAYS } from "@/lib/documents/trash";
+import { useAdmin } from "@/lib/auth/use-admin";
 import type { Document } from "@/lib/types";
 
 function formatSize(bytes: number) {
@@ -27,9 +27,13 @@ function formatSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function daysLeft(deletedAt: string) {
+/** retentionDays mirrors the admin's own configurable
+ * trash_retention_days (migration 0025) -- previously a hardcoded
+ * TRASH_RETENTION_DAYS constant that would have silently drifted from
+ * whatever the admin actually configured. */
+function daysLeft(deletedAt: string, retentionDays: number) {
   const deletedDate = new Date(deletedAt);
-  const expiresAt = new Date(deletedDate.getTime() + TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(deletedDate.getTime() + retentionDays * 24 * 60 * 60 * 1000);
   const msLeft = expiresAt.getTime() - Date.now();
   return Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
 }
@@ -41,11 +45,13 @@ function TrashRow({
   selectable,
   selected,
   onToggleSelect,
+  retentionDays,
 }: {
   doc: TrashedDoc;
   selectable: boolean;
   selected: boolean;
   onToggleSelect: (documentId: string) => void;
+  retentionDays: number;
 }) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -53,7 +59,7 @@ function TrashRow({
   const permanentlyDelete = usePermanentlyDeleteDocument();
   const confirm = useConfirm();
 
-  const remaining = doc.deleted_at ? daysLeft(doc.deleted_at) : 0;
+  const remaining = doc.deleted_at ? daysLeft(doc.deleted_at, retentionDays) : 0;
   const isImage = doc.mime_type.startsWith("image/");
 
   async function handleOpen() {
@@ -221,8 +227,10 @@ function TrashRow({
 }
 
 export default function TrashPage() {
+  const { data: admin } = useAdmin();
   const { data: documents, isLoading } = useTrashedDocuments();
   useRealtimeTrash();
+  const retentionDays = admin?.trash_retention_days ?? 30;
   const [search, setSearch] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -303,7 +311,7 @@ export default function TrashPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <AppHeader title="Trash" subtitle={`Deleted documents are kept for ${TRASH_RETENTION_DAYS} days`} backHref="/dashboard" />
+      <AppHeader title="Trash" subtitle={`Deleted documents are kept for ${retentionDays} days`} backHref="/dashboard" />
 
       <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 2xl:px-16">
         <div className="mx-auto w-full max-w-3xl">
@@ -419,6 +427,7 @@ export default function TrashPage() {
                         selectable={selectMode}
                         selected={selectedIds.has(doc.id)}
                         onToggleSelect={toggleSelect}
+                        retentionDays={retentionDays}
                       />
                     ))}
                   </AnimatePresence>

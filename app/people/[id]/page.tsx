@@ -528,6 +528,8 @@ export default function PersonPage({ params }: { params: Promise<{ id: string }>
                         selectable={selectMode}
                         selected={selectedIds.has(document.id)}
                         onToggleSelect={toggleSelect}
+                        expiryWarningDays={admin?.expiry_warning_days ?? 30}
+                        trashRetentionDays={admin?.trash_retention_days ?? 30}
                       />
                     ))}
                   </AnimatePresence>
