@@ -206,8 +206,14 @@ export default function DocumentCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.18 }}
-      whileHover={{ y: -2 }}
-      className={`group relative flex flex-col rounded-xl border p-3 shadow-sm transition-shadow hover:shadow-lg hover:shadow-indigo-900/5 ${
+      // Plain CSS hover (below) instead of whileHover -- whileHover
+      // and the `animate` prop above both drive the same `y` value,
+      // and framer-motion snapping back from whileHover's -2px to
+      // animate's 0 (on mouse-leave) with no matching transition
+      // speed of its own was producing a visible jerk/blink every
+      // time the cursor left the card. A CSS transition on `transform`
+      // has no such conflict with React-driven animate state.
+      className={`group relative flex flex-col rounded-xl border p-3 shadow-sm transition-[box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-900/5 ${
         selected
           ? "border-indigo-400 bg-indigo-50/60 dark:border-indigo-500 dark:bg-indigo-950/30"
           : "border-zinc-200/80 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-950/60"
