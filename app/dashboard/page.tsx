@@ -11,7 +11,7 @@ import AnimatedNumber from "@/components/AnimatedNumber";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { useAdmin } from "@/lib/auth/use-admin";
 import { usePeople, useCreatePerson, useUpdatePerson, useDeletePerson } from "@/lib/people/hooks";
-import { useSearchDocuments, useTotalDocumentCount } from "@/lib/documents/hooks";
+import { useSearchDocuments, useTotalDocumentCount, useExpiringSoonDocuments } from "@/lib/documents/hooks";
 import { exportAllDocumentsAsZip, type PersonWithDocuments } from "@/lib/documents/zip";
 import { downloadPeopleAsCsv } from "@/lib/people/csv";
 import ZipDownloadProgressModal from "@/components/ZipDownloadProgressModal";
@@ -58,6 +58,8 @@ export default function DashboardPage() {
   const { data: people, isLoading: peopleLoading, isError: peopleError } = usePeople(search);
   const { data: matchedDocuments, isLoading: documentsSearchLoading } = useSearchDocuments(search);
   const { data: totalDocuments } = useTotalDocumentCount();
+  const { data: expiringSoon } = useExpiringSoonDocuments();
+  const [expiringDismissed, setExpiringDismissed] = useState(false);
   const createPerson = useCreatePerson();
   const updatePerson = useUpdatePerson();
   const deletePerson = useDeletePerson();
@@ -302,6 +304,54 @@ export default function DashboardPage() {
           </motion.div>
 
           <InstallPrompt />
+
+          {!expiringDismissed && expiringSoon && expiringSoon.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/30"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="mt-0.5 h-4.5 w-4.5 shrink-0 text-amber-500">
+                    <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                      {expiringSoon.length} document{expiringSoon.length === 1 ? "" : "s"} expiring or expired
+                    </p>
+                    <ul className="mt-1.5 flex flex-col gap-0.5">
+                      {expiringSoon.slice(0, 4).map((doc) => (
+                        <li key={doc.id} className="text-xs text-amber-700 dark:text-amber-300">
+                          <Link href={`/people/${doc.person_id}`} className="hover:underline">
+                            {doc.people?.full_name ?? "Someone"}
+                          </Link>
+                          {" — "}
+                          {doc.label} ({doc.expiry_date})
+                        </li>
+                      ))}
+                      {expiringSoon.length > 4 && (
+                        <li className="text-xs text-amber-600 dark:text-amber-400">
+                          +{expiringSoon.length - 4} more
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExpiringDismissed(true)}
+                  className="shrink-0 rounded-lg p-1 text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+                  aria-label="Dismiss"
+                  title="Dismiss"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                    <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                  </svg>
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           {!adminLoading && adminError && (
             <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300">

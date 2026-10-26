@@ -327,3 +327,56 @@ export function useUpdateDocumentNotes() {
     },
   });
 }
+
+/** Updates a document's optional expiry date -- an empty string clears
+ * it back to null (not set), matching the notes field's "empty value
+ * means no value" convention. */
+export function useUpdateDocumentExpiry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ documentId, expiryDate }: { documentId: string; expiryDate: string }) => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("documents")
+        .update({ expiry_date: expiryDate || null })
+        .eq("id", documentId)
+        .select()
+        .single();
+
+      if (error) throw new Error(error.message);
+      return data as Document;
+    },
+    onSuccess: (document) => {
+      queryClient.invalidateQueries({ queryKey: ["documents", document.person_id] });
+      queryClient.invalidateQueries({ queryKey: ["documents", "expiring-soon"] });
+    },
+  });
+}
+
+/** All of this admin's non-trashed documents with an expiry date in
+ * the past or within the next 30 days -- the data behind the
+ * dashboard's "expiring soon" section. Ordered soonest-first so
+ * already-expired documents surface at the top. */
+export function useExpiringSoonDocuments() {
+  return useQuery({
+    queryKey: ["documents", "expiring-soon"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const horizon = new Date();
+      horizon.setDate(horizon.getDate() + 30);
+      const horizonStr = horizon.toISOString().slice(0, 10);
+
+      const { data, error } = await supabase
+        .from("documents")
+        .select("*, people(full_name)")
+        .is("deleted_at", null)
+        .not("expiry_date", "is", null)
+        .lte("expiry_date", horizonStr)
+        .order("expiry_date", { ascending: true });
+
+      if (error) throw new Error(error.message);
+      return data as (Document & { people: { full_name: string } | null })[];
+    },
+  });
+}

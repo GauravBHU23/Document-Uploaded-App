@@ -25,6 +25,7 @@ export type Document = {
   source: DocumentSource;
   created_at: string;
   deleted_at: string | null;
+  expiry_date: string | null;
 };
 
 export const DOCUMENT_LABEL_SUGGESTIONS = [

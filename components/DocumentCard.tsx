@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getSignedUrl } from "@/lib/documents/upload";
-import { useDeleteDocument, useRenameDocument, useUpdateDocumentNotes } from "@/lib/documents/hooks";
+import { useDeleteDocument, useRenameDocument, useUpdateDocumentNotes, useUpdateDocumentExpiry } from "@/lib/documents/hooks";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import DocumentPreviewModal from "@/components/DocumentPreviewModal";
 import type { Document } from "@/lib/types";
@@ -39,10 +39,13 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notes, setNotes] = useState(document.notes ?? "");
+  const [editingExpiry, setEditingExpiry] = useState(false);
+  const [expiryDate, setExpiryDate] = useState(document.expiry_date ?? "");
 
   const deleteDocument = useDeleteDocument();
   const renameDocument = useRenameDocument();
   const updateNotes = useUpdateDocumentNotes();
+  const updateExpiry = useUpdateDocumentExpiry();
   const confirm = useConfirm();
 
   const isImage = document.mime_type.startsWith("image/");
@@ -132,6 +135,35 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
       setEditingNotes(false);
     }
   }
+
+  async function handleExpirySubmit() {
+    if (expiryDate === (document.expiry_date ?? "")) {
+      setEditingExpiry(false);
+      return;
+    }
+    try {
+      await updateExpiry.mutateAsync({ documentId: document.id, expiryDate });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save expiry date");
+      setExpiryDate(document.expiry_date ?? "");
+    } finally {
+      setEditingExpiry(false);
+    }
+  }
+
+  // "Today" compared as a plain YYYY-MM-DD string -- document.expiry_date
+  // is a date (no time component), so comparing it to a full
+  // Date-derived ISO timestamp would make a document expiring later
+  // today incorrectly read as already expired.
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const expiryStatus = (() => {
+    if (!document.expiry_date) return null;
+    if (document.expiry_date < todayStr) return "expired";
+    const warnBy = new Date();
+    warnBy.setDate(warnBy.getDate() + 30);
+    if (document.expiry_date <= warnBy.toISOString().slice(0, 10)) return "soon";
+    return null;
+  })();
 
   const SOURCE_BADGE_COLOR: Record<Document["source"], string> = {
     upload: "bg-zinc-100 text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400",
@@ -232,6 +264,17 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
             {formatSize(document.size_bytes)}
           </span>
+          {expiryStatus && (
+            <span
+              className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                expiryStatus === "expired"
+                  ? "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400"
+                  : "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+              }`}
+            >
+              {expiryStatus === "expired" ? "Expired" : "Expiring soon"}
+            </span>
+          )}
           {!selectable && !editingNotes && (
             <button
               type="button"
@@ -244,6 +287,27 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+              </svg>
+            </button>
+          )}
+          {!selectable && !editingExpiry && (
+            <button
+              type="button"
+              onClick={() => setEditingExpiry(true)}
+              className={`shrink-0 rounded p-0.5 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                expiryStatus
+                  ? expiryStatus === "expired"
+                    ? "text-red-400"
+                    : "text-amber-400"
+                  : document.expiry_date
+                    ? "text-indigo-400"
+                    : "text-zinc-300 dark:text-zinc-600"
+              }`}
+              aria-label={document.expiry_date ? "Edit expiry date" : "Set expiry date"}
+              title={document.expiry_date ? `Expires ${document.expiry_date}` : "Set expiry date"}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                <path fillRule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 7.5a.75.75 0 01.75-.75h9a.75.75 0 010 1.5h-9a.75.75 0 01-.75-.75z" clipRule="evenodd" />
               </svg>
             </button>
           )}
@@ -273,6 +337,40 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
               title={document.notes}
             >
               {document.notes}
+            </button>
+          )
+        )}
+        {editingExpiry ? (
+          <input
+            autoFocus
+            type="date"
+            value={expiryDate}
+            onChange={(e) => setExpiryDate(e.target.value)}
+            onBlur={handleExpirySubmit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              if (e.key === "Escape") {
+                setExpiryDate(document.expiry_date ?? "");
+                setEditingExpiry(false);
+              }
+            }}
+            className="mt-1.5 w-full rounded border border-indigo-400 px-1.5 py-1 text-xs outline-none dark:bg-zinc-900 dark:[color-scheme:dark]"
+          />
+        ) : (
+          document.expiry_date && (
+            <button
+              type="button"
+              onClick={() => setEditingExpiry(true)}
+              className={`mt-1.5 block w-full truncate text-left text-xs ${
+                expiryStatus === "expired"
+                  ? "text-red-500 dark:text-red-400"
+                  : expiryStatus === "soon"
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+              }`}
+            >
+              {expiryStatus === "expired" ? "Expired " : "Expires "}
+              {document.expiry_date}
             </button>
           )
         )}
