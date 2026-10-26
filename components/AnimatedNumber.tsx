@@ -25,6 +25,12 @@ export default function AnimatedNumber({ value, className }: AnimatedNumberProps
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     motionValue.set(value);
+    // Animating from 0 to a value that's ALSO 0 (e.g. "0 documents")
+    // never fires the spring's "change" event below -- nothing moved --
+    // so the span would be left showing the empty string from the
+    // `mounted ? "" : "0"` render below forever. Seed it directly so a
+    // genuine zero still displays as "0".
+    if (spanRef.current) spanRef.current.textContent = value.toLocaleString();
   }, [value, motionValue]);
 
   useEffect(() => {
