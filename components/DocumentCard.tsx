@@ -94,7 +94,11 @@ export default function DocumentCard({
       a.href = blobUrl;
       a.download = document.label;
       a.click();
-      URL.revokeObjectURL(blobUrl);
+      // Revoking immediately after click() can race with the browser
+      // actually starting the download (especially on mobile), since
+      // the click-triggered download isn't guaranteed to happen
+      // synchronously -- a short delay lets it reliably begin first.
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not download file");
     } finally {
@@ -190,7 +194,14 @@ export default function DocumentCard({
 
   return (
     <motion.li
-      layout
+      // No `layout` prop here -- it makes framer-motion run a FLIP
+      // repositioning animation on ANY re-render where it can't cheaply
+      // rule out a layout change, including harmless internal state
+      // updates like opening the preview (previewOpen/previewUrl).
+      // That's what caused the visible "blink" on click: the card
+      // briefly animates position/scale even though it never actually
+      // moved. AnimatePresence below already handles the add/remove
+      // transition via initial/exit, which is all that's needed here.
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
