@@ -49,21 +49,26 @@ export function useDocuments(personId: string) {
   });
 }
 
-/** Searches this admin's documents by label across EVERY person, not
- * just one folder -- the per-person search on the person page can
- * only find a document once you already know whose folder it's in.
- * Capped to 20 results since this is a "jump to it" lookup, not a
- * paginated browse. Deleted (trashed) documents are excluded -- Trash
- * has its own search for that. */
+/** Searches this admin's documents by label OR notes across EVERY
+ * person, not just one folder -- the per-person search on the person
+ * page can only find a document once you already know whose folder
+ * it's in. Matching notes too (not just label) closes a blind spot:
+ * before this, a detail only ever written in a document's notes (e.g.
+ * "renewed 2024 version") was invisible to this search even though
+ * the admin could clearly see it on the document card itself. Capped
+ * to 20 results since this is a "jump to it" lookup, not a paginated
+ * browse. Deleted (trashed) documents are excluded -- Trash has its
+ * own search for that. */
 export function useSearchDocuments(query: string) {
   return useQuery({
     queryKey: ["documents", "search", query],
     queryFn: async () => {
       const supabase = createClient();
+      const term = query.trim();
       const { data, error } = await supabase
         .from("documents")
         .select("*, people(full_name)")
-        .ilike("label", `%${query.trim()}%`)
+        .or(`label.ilike.%${term}%,notes.ilike.%${term}%`)
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(20);
@@ -72,6 +77,58 @@ export function useSearchDocuments(query: string) {
       return data as (Document & { people: { full_name: string } | null })[];
     },
     enabled: query.trim().length >= 2,
+  });
+}
+
+/** Every distinct label this admin currently uses across all of their
+ * non-trashed documents, most-common first -- the data behind the
+ * dashboard's "browse by document type" quick filters (e.g. "show me
+ * everyone's Aadhar Card"). Labels are free text, so this reflects
+ * whatever the admin has actually been typing, not a fixed taxonomy. */
+export function useDocumentLabelCounts() {
+  return useQuery({
+    queryKey: ["documents", "label-counts"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("documents")
+        .select("label")
+        .is("deleted_at", null);
+
+      if (error) throw new Error(error.message);
+
+      const counts = new Map<string, number>();
+      for (const row of data as { label: string }[]) {
+        counts.set(row.label, (counts.get(row.label) ?? 0) + 1);
+      }
+
+      return Array.from(counts.entries())
+        .map(([label, count]) => ({ label, count }))
+        .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+    },
+  });
+}
+
+/** Every one of this admin's non-trashed documents with a given exact
+ * label, across every person -- the actual "show me everyone's Aadhar
+ * Card" result set, selected from one of useDocumentLabelCounts'
+ * quick-filter chips. */
+export function useDocumentsByLabel(label: string | null) {
+  return useQuery({
+    queryKey: ["documents", "by-label", label],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("documents")
+        .select("*, people(full_name)")
+        .eq("label", label as string)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+
+      if (error) throw new Error(error.message);
+      return data as (Document & { people: { full_name: string } | null })[];
+    },
+    enabled: Boolean(label),
   });
 }
 

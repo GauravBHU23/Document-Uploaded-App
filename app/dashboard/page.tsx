@@ -11,7 +11,13 @@ import AnimatedNumber from "@/components/AnimatedNumber";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { useAdmin } from "@/lib/auth/use-admin";
 import { usePeople, useCreatePerson, useUpdatePerson, useDeletePerson } from "@/lib/people/hooks";
-import { useSearchDocuments, useTotalDocumentCount, useExpiringSoonDocuments } from "@/lib/documents/hooks";
+import {
+  useSearchDocuments,
+  useTotalDocumentCount,
+  useExpiringSoonDocuments,
+  useDocumentLabelCounts,
+  useDocumentsByLabel,
+} from "@/lib/documents/hooks";
 import { exportAllDocumentsAsZip, type PersonWithDocuments } from "@/lib/documents/zip";
 import { downloadPeopleAsCsv } from "@/lib/people/csv";
 import ZipDownloadProgressModal from "@/components/ZipDownloadProgressModal";
@@ -60,6 +66,9 @@ export default function DashboardPage() {
   const { data: totalDocuments } = useTotalDocumentCount();
   const { data: expiringSoon } = useExpiringSoonDocuments();
   const [expiringDismissed, setExpiringDismissed] = useState(false);
+  const { data: labelCounts } = useDocumentLabelCounts();
+  const [browseLabel, setBrowseLabel] = useState<string | null>(null);
+  const { data: browseResults, isLoading: browseLoading } = useDocumentsByLabel(browseLabel);
   const createPerson = useCreatePerson();
   const updatePerson = useUpdatePerson();
   const deletePerson = useDeletePerson();
@@ -496,6 +505,73 @@ export default function DashboardPage() {
               </motion.button>
             </div>
           </div>
+
+          {search.trim().length < 2 && labelCounts && labelCounts.length > 0 && (
+            <div className="mt-4 flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Browse by type:</span>
+              {labelCounts.slice(0, 8).map(({ label, count }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setBrowseLabel(browseLabel === label ? null : label)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                    browseLabel === label
+                      ? "accent-gradient text-white shadow-sm"
+                      : "border border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  }`}
+                >
+                  {label} <span className="opacity-70">({count})</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {browseLabel && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 rounded-2xl border border-indigo-200/80 bg-indigo-50/50 p-4 dark:border-indigo-900/60 dark:bg-indigo-950/20"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                  {browseLoading
+                    ? "Loading..."
+                    : `${browseResults?.length ?? 0} document${browseResults?.length === 1 ? "" : "s"} labeled "${browseLabel}"`}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setBrowseLabel(null)}
+                  className="shrink-0 rounded-lg p-1 text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
+                  aria-label="Close"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                    <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                  </svg>
+                </button>
+              </div>
+              {browseResults && browseResults.length > 0 && (
+                <ul className="mt-2 flex flex-col gap-1.5">
+                  {browseResults.map((doc) => (
+                    <Link
+                      key={doc.id}
+                      href={`/people/${doc.person_id}`}
+                      className="flex items-center gap-3 rounded-xl bg-white/80 px-3 py-2 text-sm shadow-sm transition-colors hover:bg-white dark:bg-zinc-950/60 dark:hover:bg-zinc-900"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0 text-indigo-400">
+                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                      </svg>
+                      <span className="min-w-0 flex-1 truncate font-medium text-zinc-900 dark:text-zinc-50">
+                        {doc.people?.full_name ?? "Unknown"}
+                      </span>
+                      <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+                        {formatSize(doc.size_bytes)}
+                      </span>
+                    </Link>
+                  ))}
+                </ul>
+              )}
+            </motion.div>
+          )}
 
           {search.trim().length >= 2 && !documentsSearchLoading && matchedDocuments && matchedDocuments.length > 0 && (
             <motion.div
