@@ -300,12 +300,13 @@ export default function DocumentCard({ document, selectable, selected, onToggleS
           <button
             type="button"
             onClick={handleDelete}
+            disabled={deleteDocument.isPending}
             // Always visible (not hover-only) below sm: -- touchscreens
             // have no :hover, so group-hover:opacity-100 alone left this
             // permanently invisible on mobile, with no way to delete a
             // document from its card (only via Select mode). Desktop
             // keeps the subtler hover-reveal via sm:opacity-0.
-            className="absolute right-2 top-2 rounded-md bg-white/90 p-1.5 text-zinc-400 opacity-70 transition-opacity hover:bg-red-50 hover:text-red-600 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 dark:bg-zinc-950/90 dark:hover:bg-red-950/40"
+            className="absolute right-2 top-2 rounded-md bg-white/90 p-1.5 text-zinc-400 opacity-70 transition-opacity hover:bg-red-50 hover:text-red-600 hover:opacity-100 disabled:pointer-events-none disabled:opacity-40 sm:opacity-0 sm:group-hover:opacity-100 dark:bg-zinc-950/90 dark:hover:bg-red-950/40"
             aria-label={`Delete ${document.label}`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">

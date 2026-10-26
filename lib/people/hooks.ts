@@ -118,14 +118,31 @@ export function useUpdatePerson() {
   });
 }
 
+/** Deletes a person and ALL their documents (active and trashed alike)
+ * -- a hard, irreversible delete that bypasses Trash entirely (the DB
+ * cascade removes the document rows outright, not a soft-delete).
+ * Uses delete_person_and_get_storage_paths (migration 0020) rather
+ * than a plain `delete from people`, since an on-delete-cascade only
+ * ever removes database rows -- without this RPC, every Storage file
+ * that person ever had would be orphaned (unreachable, but still
+ * consuming storage quota forever). Same pattern as purgeExpiredTrash
+ * in lib/documents/trash.ts: the RPC returns the storage paths, the
+ * client removes those objects in one batched Storage call. */
 export function useDeletePerson() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (personId: string) => {
       const supabase = createClient();
-      const { error } = await supabase.from("people").delete().eq("id", personId);
+      const { data, error } = await supabase.rpc("delete_person_and_get_storage_paths", {
+        p_person_id: personId,
+      });
       if (error) throw new Error(error.message);
+
+      const paths = (data as Array<{ storage_path: string }> | null)?.map((r) => r.storage_path) ?? [];
+      if (paths.length > 0) {
+        await supabase.storage.from("documents").remove(paths);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["people"] });

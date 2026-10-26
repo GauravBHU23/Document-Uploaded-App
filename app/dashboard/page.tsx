@@ -116,7 +116,8 @@ export default function DashboardPage() {
   async function handleDelete(personId: string, fullName: string) {
     const confirmed = await confirm({
       title: `Delete ${fullName}?`,
-      description: "This also deletes all of their documents. This cannot be undone.",
+      description:
+        "This permanently deletes all of their documents too — even trashed ones skip the 30-day recovery window. This cannot be undone.",
       confirmLabel: "Delete",
       danger: true,
     });
@@ -568,7 +569,8 @@ export default function DashboardPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(person.id, person.full_name)}
-                        className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                        disabled={deletePerson.isPending}
+                        className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-red-950/40"
                         aria-label={`Delete ${person.full_name}`}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
